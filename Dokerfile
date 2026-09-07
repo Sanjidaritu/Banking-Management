@@ -7,13 +7,13 @@ RUN docker-php-ext-install pdo pdo_mysql mysqli
 RUN a2enmod rewrite
 
 # Copy the website into Apache's document root
-COPY . /var/www/html/
+COPY . /var/www/php/
 
 # Set the working directory
-WORKDIR /var/www/html/
+WORKDIR /var/www/php/
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/php
 
 # Railway uses port 80
 EXPOSE 80
