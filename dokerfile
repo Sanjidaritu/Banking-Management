@@ -1,13 +1,9 @@
 FROM php:8.3-apache
 
-# Enable Apache rewrite module
 RUN a2enmod rewrite
 
-# Copy project files into Apache web directory
 COPY . /var/www/html/
 
-# Set working directory
 WORKDIR /var/www/html/
 
-# Expose Apache port
 EXPOSE 80
