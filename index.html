@@ -1,0 +1,1281 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Upright Bank | Online Banking</title>
+
+    <style>
+
+        /* =====================================================
+           RESET
+        ===================================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #1c2b39;
+            background: #ffffff;
+            line-height: 1.5;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .header {
+            width: 100%;
+            background: #ffffff;
+            border-bottom: 1px solid #e5e9ee;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-inner {
+            width: 90%;
+            max-width: 1200px;
+            height: 76px;
+            margin: auto;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+
+        /* LOGO */
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+
+            background: #123b68;
+            color: #ffffff;
+
+            border-radius: 8px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 23px;
+            font-weight: 700;
+            color: #123b68;
+        }
+
+
+        /* NAVIGATION */
+
+        .navigation {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .navigation a {
+            color: #44515e;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .navigation a:hover {
+            color: #123b68;
+        }
+
+
+        /* HEADER BUTTONS */
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .login-button {
+            background: #123b68;
+            color: #ffffff;
+
+            border: none;
+            border-radius: 5px;
+
+            padding: 11px 23px;
+
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .login-button:hover {
+            background: #0d2d50;
+        }
+
+        .enroll-button {
+            background: #ffffff;
+            color: #123b68;
+
+            border: 1px solid #123b68;
+            border-radius: 5px;
+
+            padding: 10px 20px;
+
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .enroll-button:hover {
+            background: #f2f6fa;
+        }
+
+
+        /* =====================================================
+           HERO
+        ===================================================== */
+
+        .hero {
+            background: #f3f7fb;
+            padding: 80px 20px;
+        }
+
+        .hero-inner {
+            max-width: 1200px;
+            width: 90%;
+            margin: auto;
+
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+
+            align-items: center;
+            gap: 70px;
+        }
+
+
+        /* HERO TEXT */
+
+        .hero-content h1 {
+            font-size: 48px;
+            line-height: 1.15;
+            color: #123b68;
+            margin-bottom: 20px;
+        }
+
+        .hero-content h1 span {
+            color: #287c62;
+        }
+
+        .hero-content p {
+            font-size: 18px;
+            color: #596674;
+            max-width: 560px;
+            margin-bottom: 30px;
+        }
+
+
+        /* HERO BUTTONS */
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .primary-button {
+            background: #123b68;
+            color: #ffffff;
+
+            border: none;
+            border-radius: 5px;
+
+            padding: 14px 28px;
+
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .primary-button:hover {
+            background: #0d2d50;
+        }
+
+        .secondary-button {
+            background: #ffffff;
+            color: #123b68;
+
+            border: 1px solid #123b68;
+            border-radius: 5px;
+
+            padding: 13px 28px;
+
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .secondary-button:hover {
+            background: #eef4f9;
+        }
+
+
+        /* =====================================================
+           HERO CARD
+        ===================================================== */
+
+        .hero-card {
+            background: #123b68;
+            border-radius: 12px;
+            padding: 35px;
+
+            color: #ffffff;
+
+            min-height: 330px;
+
+            box-shadow: 0 15px 40px rgba(18, 59, 104, 0.18);
+        }
+
+        .hero-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 45px;
+        }
+
+        .hero-card-title {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .secure-icon {
+            font-size: 24px;
+        }
+
+        .hero-card h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .hero-card p {
+            color: #dce8f3;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .card-action {
+            display: inline-block;
+
+            background: #ffffff;
+            color: #123b68;
+
+            padding: 12px 22px;
+
+            border-radius: 5px;
+
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+
+        /* =====================================================
+           QUICK ACCESS
+        ===================================================== */
+
+        .quick-access {
+            padding: 55px 20px;
+            background: #ffffff;
+        }
+
+        .quick-access-inner {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .section-heading {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .section-heading h2 {
+            color: #123b68;
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .section-heading p {
+            color: #687582;
+            font-size: 14px;
+        }
+
+
+        .quick-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 20px;
+        }
+
+        .quick-card {
+            border: 1px solid #e3e8ed;
+            border-radius: 8px;
+
+            padding: 25px;
+
+            text-align: center;
+
+            transition: 0.2s;
+        }
+
+        .quick-card:hover {
+            transform: translateY(-3px);
+
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.07);
+        }
+
+        .quick-icon {
+            width: 48px;
+            height: 48px;
+
+            margin: 0 auto 15px;
+
+            border-radius: 50%;
+
+            background: #edf4fa;
+            color: #123b68;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 20px;
+        }
+
+        .quick-card h3 {
+            color: #253746;
+            font-size: 16px;
+            margin-bottom: 7px;
+        }
+
+        .quick-card p {
+            color: #727e88;
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           FEATURES
+        ===================================================== */
+
+        .features {
+            background: #f7f9fb;
+            padding: 70px 20px;
+        }
+
+        .features-inner {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .feature-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 25px;
+        }
+
+        .feature-card {
+            background: #ffffff;
+
+            border-radius: 8px;
+
+            padding: 30px;
+
+            border: 1px solid #e4e8ec;
+        }
+
+        .feature-number {
+            color: #287c62;
+            font-size: 13px;
+            font-weight: bold;
+
+            margin-bottom: 12px;
+        }
+
+        .feature-card h3 {
+            color: #123b68;
+            font-size: 19px;
+
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: #687582;
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           SECURITY SECTION
+        ===================================================== */
+
+        .security {
+            padding: 75px 20px;
+            background: #123b68;
+            color: #ffffff;
+        }
+
+        .security-inner {
+            width: 90%;
+            max-width: 1000px;
+            margin: auto;
+
+            text-align: center;
+        }
+
+        .security-icon {
+            width: 65px;
+            height: 65px;
+
+            background: rgba(255,255,255,0.12);
+
+            border-radius: 50%;
+
+            margin: 0 auto 20px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 28px;
+        }
+
+        .security h2 {
+            font-size: 30px;
+            margin-bottom: 12px;
+        }
+
+        .security p {
+            max-width: 650px;
+            margin: auto;
+
+            color: #dce7f1;
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .footer {
+            background: #0c2947;
+            color: #ffffff;
+            padding: 50px 20px 25px;
+        }
+
+        .footer-inner {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .footer-grid {
+            display: grid;
+
+            grid-template-columns:
+                2fr 1fr 1fr 1fr;
+
+            gap: 40px;
+
+            padding-bottom: 35px;
+        }
+
+        .footer-logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .footer-about {
+            color: #bdcbd8;
+            font-size: 13px;
+            max-width: 300px;
+        }
+
+        .footer-column h4 {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .footer-column a {
+            display: block;
+
+            color: #bdcbd8;
+
+            font-size: 13px;
+
+            margin-bottom: 9px;
+        }
+
+        .footer-column a:hover {
+            color: #ffffff;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.12);
+
+            padding-top: 20px;
+
+            display: flex;
+            justify-content: space-between;
+
+            color: #9fb0bf;
+
+            font-size: 12px;
+        }
+
+
+        /* =====================================================
+           MOBILE MENU BUTTON
+        ===================================================== */
+
+        .menu-button {
+            display: none;
+
+            background: none;
+            border: none;
+
+            font-size: 24px;
+            color: #123b68;
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .navigation {
+                display: none;
+            }
+
+            .menu-button {
+                display: block;
+            }
+
+            .hero-inner {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-content {
+                text-align: center;
+            }
+
+            .hero-content p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .quick-grid {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+            .feature-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns:
+                    1fr 1fr;
+            }
+        }
+
+
+        @media (max-width: 600px) {
+
+            .header-inner {
+                height: 65px;
+            }
+
+            .logo-text {
+                font-size: 19px;
+            }
+
+            .logo-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .header-actions {
+                gap: 5px;
+            }
+
+            .header-actions .enroll-button {
+                display: none;
+            }
+
+            .login-button {
+                padding: 9px 15px;
+            }
+
+            .hero {
+                padding: 55px 15px;
+            }
+
+            .hero-content h1 {
+                font-size: 35px;
+            }
+
+            .hero-content p {
+                font-size: 16px;
+            }
+
+            .hero-card {
+                padding: 25px;
+            }
+
+            .quick-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header class="header">
+
+    <div class="header-inner">
+
+
+        <!-- LOGO -->
+
+        <a href="index.html" class="logo">
+
+            <div class="logo-icon">
+                U
+            </div>
+
+            <div class="logo-text">
+                Upright Bank
+            </div>
+
+        </a>
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="navigation">
+
+            <a href="#banking">
+                Personal Banking
+            </a>
+
+            <a href="#services">
+                Services
+            </a>
+
+            <a href="#security">
+                Security
+            </a>
+
+            <a href="#support">
+                Support
+            </a>
+
+        </nav>
+
+
+        <!-- ACTIONS -->
+
+        <div class="header-actions">
+
+            <a
+                href="enrollment.html"
+                class="enroll-button">
+
+                Enroll
+
+            </a>
+
+            <a
+                href="login.html"
+                class="login-button">
+
+                Log In
+
+            </a>
+
+            <button
+                class="menu-button"
+                id="menuButton">
+
+                ☰
+
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================================
+     HERO
+========================================================= -->
+
+<section class="hero" id="banking">
+
+    <div class="hero-inner">
+
+
+        <div class="hero-content">
+
+            <h1>
+                Banking made
+                <span>simple and secure.</span>
+            </h1>
+
+            <p>
+                Manage your accounts, monitor your finances,
+                and access your banking services securely
+                from anywhere.
+            </p>
+
+
+            <div class="hero-buttons">
+
+                <a
+                    href="login.html"
+                    class="primary-button">
+
+                    Log In to Online Banking
+
+                </a>
+
+                <a
+                    href="enrollment.html"
+                    class="secondary-button">
+
+                    Enroll in Online Banking
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- HERO CARD -->
+
+        <div class="hero-card">
+
+            <div class="hero-card-top">
+
+                <div class="hero-card-title">
+                    ONLINE BANKING
+                </div>
+
+                <div class="secure-icon">
+                    🔒
+                </div>
+
+            </div>
+
+
+            <h2>
+                Your money.
+                Your control.
+            </h2>
+
+            <p>
+                Securely access your accounts and manage
+                your banking needs whenever you need them.
+            </p>
+
+
+            <a
+                href="login.html"
+                class="card-action">
+
+                Access Your Account
+
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     QUICK ACCESS
+========================================================= -->
+
+<section class="quick-access">
+
+    <div class="quick-access-inner">
+
+
+        <div class="section-heading">
+
+            <h2>
+                Quick Access
+            </h2>
+
+            <p>
+                Everything you need to manage your banking.
+            </p>
+
+        </div>
+
+
+        <div class="quick-grid">
+
+
+            <!-- CARD 1 -->
+
+            <div class="quick-card">
+
+                <div class="quick-icon">
+                    $
+                </div>
+
+                <h3>
+                    Account Overview
+                </h3>
+
+                <p>
+                    View your account balances and
+                    recent transactions.
+                </p>
+
+            </div>
+
+
+            <!-- CARD 2 -->
+
+            <div class="quick-card">
+
+                <div class="quick-icon">
+                    ↗
+                </div>
+
+                <h3>
+                    Transfer Money
+                </h3>
+
+                <p>
+                    Move money between your eligible
+                    bank accounts.
+                </p>
+
+            </div>
+
+
+            <!-- CARD 3 -->
+
+            <div class="quick-card">
+
+                <div class="quick-icon">
+                    ▣
+                </div>
+
+                <h3>
+                    Pay Bills
+                </h3>
+
+                <p>
+                    Manage and pay your bills
+                    conveniently online.
+                </p>
+
+            </div>
+
+
+            <!-- CARD 4 -->
+
+            <div class="quick-card">
+
+                <div class="quick-icon">
+                    ✓
+                </div>
+
+                <h3>
+                    Secure Banking
+                </h3>
+
+                <p>
+                    Your information is protected
+                    with security controls.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     FEATURES
+========================================================= -->
+
+<section class="features" id="services">
+
+    <div class="features-inner">
+
+
+        <div class="section-heading">
+
+            <h2>
+                Banking at Your Fingertips
+            </h2>
+
+            <p>
+                Convenient tools designed to make
+                managing your finances easier.
+            </p>
+
+        </div>
+
+
+        <div class="feature-grid">
+
+
+            <div class="feature-card">
+
+                <div class="feature-number">
+                    01
+                </div>
+
+                <h3>
+                    Manage Your Accounts
+                </h3>
+
+                <p>
+                    View account information, balances,
+                    and transaction history from one
+                    convenient location.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-number">
+                    02
+                </div>
+
+                <h3>
+                    Access Anywhere
+                </h3>
+
+                <p>
+                    Access online banking from your
+                    computer, tablet, or mobile device.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-number">
+                    03
+                </div>
+
+                <h3>
+                    Stay Protected
+                </h3>
+
+                <p>
+                    Security features help protect your
+                    online banking information and account access.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     SECURITY
+========================================================= -->
+
+<section
+    class="security"
+    id="security">
+
+    <div class="security-inner">
+
+        <div class="security-icon">
+            🔒
+        </div>
+
+        <h2>
+            Your Security Matters
+        </h2>
+
+        <p>
+            We use security controls designed to help
+            protect your account information and online
+            banking activity. Never share your username,
+            password, or security information with anyone.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer
+    class="footer"
+    id="support">
+
+    <div class="footer-inner">
+
+
+        <div class="footer-grid">
+
+
+            <!-- ABOUT -->
+
+            <div>
+
+                <div class="footer-logo">
+                    Upright Bank
+                </div>
+
+                <p class="footer-about">
+                    Secure and convenient online banking
+                    designed to help you manage your
+                    finances with confidence.
+                </p>
+
+            </div>
+
+
+            <!-- BANKING -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Banking
+                </h4>
+
+                <a href="login.html">
+                    Online Banking
+                </a>
+
+                <a href="enrollment.html">
+                    Enroll
+                </a>
+
+                <a href="#">
+                    Accounts
+                </a>
+
+                <a href="#">
+                    Transfers
+                </a>
+
+            </div>
+
+
+            <!-- SUPPORT -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Support
+                </h4>
+
+                <a href="#">
+                    Contact Us
+                </a>
+
+                <a href="#">
+                    Help Center
+                </a>
+
+                <a href="#">
+                    Forgot Username
+                </a>
+
+                <a href="#">
+                    Reset Password
+                </a>
+
+            </div>
+
+
+            <!-- LEGAL -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Information
+                </h4>
+
+                <a href="#">
+                    Privacy
+                </a>
+
+                <a href="#">
+                    Security
+                </a>
+
+                <a href="#">
+                    Terms & Conditions
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <div>
+                © 2026 Upright Bank. All rights reserved.
+            </div>
+
+            <div>
+                Member FDIC · Equal Housing Opportunity
+            </div>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+    /*
+    ============================================================
+    MOBILE MENU
+    ============================================================
+    */
+
+    const menuButton =
+        document.getElementById("menuButton");
+
+    const navigation =
+        document.querySelector(".navigation");
+
+
+    menuButton.addEventListener("click", function () {
+
+        if (navigation.style.display === "flex") {
+
+            navigation.style.display = "none";
+
+        } else {
+
+            navigation.style.display = "flex";
+
+            navigation.style.position = "absolute";
+
+            navigation.style.top = "65px";
+
+            navigation.style.left = "0";
+
+            navigation.style.width = "100%";
+
+            navigation.style.background = "#ffffff";
+
+            navigation.style.padding = "20px";
+
+            navigation.style.flexDirection = "column";
+
+            navigation.style.borderBottom =
+                "1px solid #e5e9ee";
+
+        }
+
+    });
+
+</script>
+
+
+</body>
+</html>
+
