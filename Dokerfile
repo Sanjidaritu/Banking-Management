@@ -1,11 +1,13 @@
-FROM php:8.3-apache
+FROM node:22-alpine
 
-RUN docker-php-ext-install pdo pdo_mysql
+WORKDIR /app
 
-COPY . /var/www/html/
+COPY package*.json ./
 
-WORKDIR /var/www/html/
+RUN npm install
 
-RUN chown -R www-data:www-data /var/www/html
+COPY . .
 
-EXPOSE 80
+EXPOSE 8080
+
+CMD ["node", "server.js"]
