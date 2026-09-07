@@ -14,7 +14,7 @@
 
 $page_title = "Enroll in Online Banking | Horizon Bank";
 ?>
-<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
