@@ -1,13 +1,19 @@
-FROM node:22-alpine
+FROM php:8.3-apache
 
-WORKDIR /app
+# Install PHP extensions needed for MySQL
+RUN docker-php-ext-install pdo pdo_mysql mysqli
 
-COPY package*.json ./
+# Enable Apache rewrite module
+RUN a2enmod rewrite
 
-RUN npm install
+# Copy the website into Apache's document root
+COPY . /var/www/html/
 
-COPY . .
+# Set the working directory
+WORKDIR /var/www/html/
 
-EXPOSE 8080
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
 
-CMD ["node", "server.js"]
+# Railway uses port 80
+EXPOSE 80
