@@ -30,10 +30,6 @@ $page_title = "Enroll in Online Banking | Horizon Bank";
         <?= htmlspecialchars($page_title, ENT_QUOTES, 'UTF-8'); ?>
     </title>
 
-    <link
-        rel="stylesheet"
-        href="register.css"
-    >
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
 
