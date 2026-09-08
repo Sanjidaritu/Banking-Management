@@ -22,7 +22,23 @@ $("identityForm").addEventListener("submit", async e => {
       method: "POST", headers: {"Content-Type":"application/json"},
       body: JSON.stringify(body)
     });
-    const data = await res.json();
+const text = await res.text();
+
+console.log("Verify API status:", res.status);
+console.log("Verify API response:", text);
+
+let data;
+
+try {
+  data = JSON.parse(text);
+} catch (error) {
+  throw new Error("The verification API did not return valid JSON. Check verify.php.");
+}
+
+if (!res.ok || !data.success) {
+  throw new Error(data.message || "Verification failed.");
+}
+    
     if (!res.ok || !data.success) throw new Error(data.message || "Verification failed.");
     enrollmentToken = data.enrollment_token;
     $("step1").classList.remove("active");
