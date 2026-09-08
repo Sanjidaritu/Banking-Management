@@ -10,50 +10,12 @@ $db   = getenv('MYSQLDATABASE');
 $user = getenv('MYSQLUSER');
 $pass = getenv('MYSQLPASSWORD');
 
-if (!$host || !$port || !$db || !$user || !$pass) {
+echo json_encode([
+    'MYSQLHOST' => $host ? 'FOUND' : 'MISSING',
+    'MYSQLPORT' => $port ? 'FOUND' : 'MISSING',
+    'MYSQLDATABASE' => $db ? 'FOUND' : 'MISSING',
+    'MYSQLUSER' => $user ? 'FOUND' : 'MISSING',
+    'MYSQLPASSWORD' => $pass ? 'FOUND' : 'MISSING'
+]);
 
-    http_response_code(500);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database environment variables are missing.'
-    ]);
-
-    exit;
-}
-
-try {
-
-    $pdo = new PDO(
-        "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4",
-        $user,
-        $pass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
-
-} catch (Throwable $e) {
-
-    error_log('Database connection error: ' . $e->getMessage());
-
-    http_response_code(500);
-
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed.'
-    ]);
-
-    exit;
-}
-
-function json_response(array $data, int $status = 200): never
-{
-    http_response_code($status);
-
-    echo json_encode($data);
-
-    exit;
-}
+exit;
