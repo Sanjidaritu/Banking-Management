@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login | Horizon Bank</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0}.wrap{max-width:450px;margin:70px auto;padding:20px}
+.card{background:#fff;padding:32px;border-radius:12px;box-shadow:0 8px 30px #0001}label{display:block;margin:16px 0 6px;font-weight:600}
+input{width:100%;padding:12px;box-sizing:border-box;border:1px solid #ccd4df;border-radius:6px}
+button{width:100%;margin-top:22px;padding:12px;border:0;border-radius:6px;background:#0b4f8a;color:#fff;cursor:pointer}.error{color:#b42318;margin-top:15px}
+</style>
+</head>
+<body><div class="wrap"><div class="card">
+<h1>Online Banking Login</h1>
+<form id="loginForm">
+<label>Username</label><input id="username" autocomplete="username" required>
+<label>Password</label><input id="password" type="password" autocomplete="current-password" required>
+<div id="error" class="error"></div>
+<button type="submit">Login</button>
+</form>
+<p>Don't have online banking? <a href="register.html">Enroll now</a></p>
+</div></div>
+<script src="login.js"></script></body></html>
