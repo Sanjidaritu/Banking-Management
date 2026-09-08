@@ -1,6 +1,12 @@
+```php
 <?php
 
 declare(strict_types=1);
+
+// TEMPORARY DEBUGGING
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -8,6 +14,8 @@ session_start();
 
 try {
 
+    // IMPORTANT:
+    // If config.php is in your PROJECT ROOT, use ../../config.php
     require_once __DIR__ . '/../../config.php';
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -17,14 +25,12 @@ try {
             'success' => false,
             'message' => 'Method not allowed.'
         ]);
-
         exit;
     }
 
-    $data = json_decode(
-        file_get_contents('php://input'),
-        true
-    );
+    $raw = file_get_contents('php://input');
+
+    $data = json_decode($raw, true);
 
     if (!is_array($data)) {
         http_response_code(400);
@@ -33,7 +39,6 @@ try {
             'success' => false,
             'message' => 'Invalid JSON request.'
         ]);
-
         exit;
     }
 
@@ -54,7 +59,6 @@ try {
             'success' => false,
             'message' => 'The information could not be verified.'
         ]);
-
         exit;
     }
 
@@ -92,7 +96,6 @@ try {
             'success' => false,
             'message' => 'The information could not be verified.'
         ]);
-
         exit;
     }
 
@@ -102,7 +105,7 @@ try {
         hash('sha256', $token);
 
     $_SESSION['enrollment_customer_id'] =
-        (int)$customer['id'];
+        (int) $customer['id'];
 
     $_SESSION['enrollment_expires'] =
         time() + 600;
@@ -118,6 +121,9 @@ try {
 
     echo json_encode([
         'success' => false,
-        'message' => 'Server error: ' . $e->getMessage()
+        'message' => 'PHP ERROR: ' . $e->getMessage()
     ]);
+
+    exit;
 }
+```
