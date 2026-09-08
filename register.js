@@ -71,10 +71,9 @@ $("identityForm").addEventListener("submit", async e => {
 
     if (!text.trim()) {
 
-      throw new Error(
-        "verify.php returned an EMPTY response. Check the PHP file."
-      );
-
+    throw new Error(
+  "SERVER RESPONSE: " + text.substring(0, 500)
+);
     }
 
 
