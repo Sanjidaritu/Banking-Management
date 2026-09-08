@@ -1,11 +1,9 @@
-FROM php:8.3-apache
+FROM php:8.3-cli
 
 RUN docker-php-ext-install pdo pdo_mysql
 
-COPY . /var/www/html/
+COPY . /var/www/html
 
-WORKDIR /var/www/html/
+WORKDIR /var/www/html
 
-RUN chown -R www-data:www-data /var/www/html
-
-EXPOSE 80
+CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8080} -t /var/www/html"]
