@@ -1,0 +1,5 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Dashboard</title></head>
+<body><h1>Online Banking Dashboard</h1><p>You are logged in.</p><button id="logout">Logout</button>
+<script>
+document.getElementById("logout").onclick=async()=>{await fetch("api/auth/logout.php",{method:"POST"});location.href="login.html";}
+</script></body></html>
