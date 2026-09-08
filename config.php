@@ -4,11 +4,22 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-$host = getenv('MYSQLHOST') ?: '127.0.0.1';
-$port = getenv('MYSQLPORT') ?: '3306';
-$db   = getenv('MYSQLDATABASE') ?: 'banking_management';
-$user = getenv('MYSQLUSER') ?: 'root';
-$pass = getenv('MYSQLPASSWORD') ?: '';
+$host = getenv('MYSQLHOST');
+$port = getenv('MYSQLPORT');
+$db   = getenv('MYSQLDATABASE');
+$user = getenv('MYSQLUSER');
+$pass = getenv('MYSQLPASSWORD');
+
+if (!$host || !$port || !$db || !$user || !$pass) {
+    http_response_code(500);
+
+    echo json_encode([
+        'success' => false,
+        'message' => 'Database environment variables are missing.'
+    ]);
+
+    exit;
+}
 
 try {
 
