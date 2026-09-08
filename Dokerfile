@@ -1,19 +1,6 @@
 FROM php:8.3-apache
-
-# Install PHP extensions needed for MySQL
-RUN docker-php-ext-install pdo pdo_mysql mysqli
-
-# Enable Apache rewrite module
-RUN a2enmod rewrite
-
-# Copy the website into Apache's document root
-COPY . /var/www/php/
-
-# Set the working directory
-WORKDIR /var/www/php/
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/php
-
-# Railway uses port 80
+RUN docker-php-ext-install pdo pdo_mysql
+COPY . /var/www/html/
+WORKDIR /var/www/html/
+RUN chown -R www-data:www-data /var/www/html
 EXPOSE 80
