@@ -40,8 +40,8 @@ $("identityForm").addEventListener("submit", async e => {
 
   try {
 
-    const res = await fetch("api/enrollment/verify.php", {
-
+const res = await fetch("verify.php", {
+   
       method: "POST",
 
       headers: {
