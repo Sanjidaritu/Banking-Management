@@ -40,8 +40,8 @@ $("identityForm").addEventListener("submit", async e => {
 
   try {
 
-const res = await fetch("verify.php", {
-   
+    const res = await fetch("verify.php", {
+
       method: "POST",
 
       headers: {
@@ -66,14 +66,15 @@ const res = await fetch("verify.php", {
 
 
     /* -----------------------------
-       Empty response
+       Check empty response
        ----------------------------- */
 
     if (!text.trim()) {
 
-    throw new Error(
-  "SERVER RESPONSE: " + text.substring(0, 500)
-);
+      throw new Error(
+        "verify.php returned an EMPTY response. Check the PHP file."
+      );
+
     }
 
 
@@ -92,7 +93,7 @@ const res = await fetch("verify.php", {
       console.error("JSON PARSE ERROR:", error);
 
       throw new Error(
-        "verify.php returned this instead of JSON: " +
+        "verify.php returned invalid JSON: " +
         text.substring(0, 500)
       );
 
@@ -138,7 +139,8 @@ const res = await fetch("verify.php", {
 
     console.error("VERIFY ERROR:", err);
 
-    $("verifyError").textContent = err.message;
+    $("verifyError").textContent =
+      err.message;
 
   }
 
@@ -151,11 +153,13 @@ const res = await fetch("verify.php", {
 
 $("username").addEventListener("input", async () => {
 
-  const username = $("username").value.trim();
+  const username =
+    $("username").value.trim();
 
   $("usernameStatus").textContent = "";
 
-  $("usernameStatus").className = "status";
+  $("usernameStatus").className =
+    "status";
 
 
   /* -----------------------------
@@ -176,10 +180,14 @@ $("username").addEventListener("input", async () => {
   try {
 
     const res = await fetch(
-      "api/enrollment/check-username.php?username=" +
+      "check-username.php?username=" +
       encodeURIComponent(username)
     );
 
+
+    /* -----------------------------
+       Read server response
+       ----------------------------- */
 
     const text = await res.text();
 
@@ -188,15 +196,72 @@ $("username").addEventListener("input", async () => {
     console.log("USERNAME RESPONSE:", text);
 
 
+    /* -----------------------------
+       Check empty response
+       ----------------------------- */
+
     if (!text.trim()) {
+
+      $("usernameStatus").textContent =
+        "Unable to check username.";
+
+      $("usernameStatus").className =
+        "status error";
 
       return;
 
     }
 
 
-    const data = JSON.parse(text);
+    /* -----------------------------
+       Convert response to JSON
+       ----------------------------- */
 
+    let data;
+
+    try {
+
+      data = JSON.parse(text);
+
+    } catch (error) {
+
+      console.error(
+        "USERNAME JSON ERROR:",
+        error
+      );
+
+      $("usernameStatus").textContent =
+        "Username service returned invalid data.";
+
+      $("usernameStatus").className =
+        "status error";
+
+      return;
+
+    }
+
+
+    /* -----------------------------
+       Check API result
+       ----------------------------- */
+
+    if (!res.ok || !data.success) {
+
+      $("usernameStatus").textContent =
+        data.message ||
+        "Unable to check username.";
+
+      $("usernameStatus").className =
+        "status error";
+
+      return;
+
+    }
+
+
+    /* -----------------------------
+       Username available
+       ----------------------------- */
 
     if (data.available) {
 
@@ -206,7 +271,14 @@ $("username").addEventListener("input", async () => {
       $("usernameStatus").className =
         "status success";
 
-    } else {
+    }
+
+
+    /* -----------------------------
+       Username already taken
+       ----------------------------- */
+
+    else {
 
       $("usernameStatus").textContent =
         "Username is already taken.";
@@ -218,9 +290,23 @@ $("username").addEventListener("input", async () => {
 
   }
 
+
+  /* -----------------------------
+     Handle username errors
+     ----------------------------- */
+
   catch (error) {
 
-    console.error("USERNAME CHECK ERROR:", error);
+    console.error(
+      "USERNAME CHECK ERROR:",
+      error
+    );
+
+    $("usernameStatus").textContent =
+      "Unable to check username.";
+
+    $("usernameStatus").className =
+      "status error";
 
   }
 
@@ -326,7 +412,7 @@ $("credentialsForm").addEventListener("submit", async e => {
   try {
 
     const res = await fetch(
-      "api/enrollment/create.php",
+      "create.php",
       {
 
         method: "POST",
@@ -364,6 +450,10 @@ $("credentialsForm").addEventListener("submit", async e => {
     console.log("CREATE RESPONSE:", text);
 
 
+    /* -----------------------------
+       Check empty response
+       ----------------------------- */
+
     if (!text.trim()) {
 
       throw new Error(
@@ -387,7 +477,10 @@ $("credentialsForm").addEventListener("submit", async e => {
 
     catch (error) {
 
-      console.error("CREATE JSON ERROR:", error);
+      console.error(
+        "CREATE JSON ERROR:",
+        error
+      );
 
       throw new Error(
         "create.php returned invalid JSON: " +
@@ -443,7 +536,10 @@ $("credentialsForm").addEventListener("submit", async e => {
 
   catch (err) {
 
-    console.error("CREATE ACCOUNT ERROR:", err);
+    console.error(
+      "CREATE ACCOUNT ERROR:",
+      err
+    );
 
     $("credentialError").textContent =
       err.message;
