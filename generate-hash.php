@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 require_once __DIR__ . '/config.php';
 
 $customers = [
@@ -12,20 +10,14 @@ $customers = [
     '9001002008' => 'ENROLL2468'
 ];
 
-$sql = "
+$stmt = $pdo->prepare("
     UPDATE customers
     SET enrollment_reference_hash = :hash
     WHERE account_number = :account
-";
-
-$stmt = $pdo->prepare($sql);
+");
 
 foreach ($customers as $account => $reference) {
-
-    $hash = password_hash(
-        $reference,
-        PASSWORD_DEFAULT
-    );
+    $hash = password_hash($reference, PASSWORD_DEFAULT);
 
     $stmt->execute([
         ':hash' => $hash,
@@ -35,4 +27,4 @@ foreach ($customers as $account => $reference) {
     echo "Updated {$account}<br>";
 }
 
-echo "<br>All enrollment references have been hashed successfully.";
+echo "<br>All 5 customers updated.";
