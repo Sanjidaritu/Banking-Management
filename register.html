@@ -1,52 +1,325 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta charset="utf-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+>
+
 <title>Enroll | Horizon Bank</title>
+
 <style>
-body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#172033}.wrap{max-width:700px;margin:50px auto;padding:20px}
-.card{background:#fff;padding:32px;border-radius:12px;box-shadow:0 8px 30px #0001}.step{display:none}.step.active{display:block}
-label{display:block;margin:16px 0 6px;font-weight:600}input{width:100%;padding:12px;border:1px solid #ccd4df;border-radius:6px;box-sizing:border-box}
-button{margin-top:22px;padding:12px 20px;border:0;border-radius:6px;background:#0b4f8a;color:#fff;cursor:pointer}
-button.secondary{background:#fff;color:#333;border:1px solid #ccd4df}.error{color:#b42318;margin:12px 0}.success{color:#146c3a}.status{font-size:13px;margin-top:6px}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
+}
+
+.wrap {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+.card {
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px #0001;
+}
+
+.step {
+    display: none;
+}
+
+.step.active {
+    display: block;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+label {
+    display: block;
+    margin: 16px 0 6px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccd4df;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #0b4f8a;
+}
+
+button {
+    margin-top: 22px;
+    padding: 12px 20px;
+    border: 0;
+    border-radius: 6px;
+    background: #0b4f8a;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button.secondary {
+    background: #ffffff;
+    color: #333333;
+    border: 1px solid #ccd4df;
+}
+
+.error {
+    color: #b42318;
+    margin: 12px 0;
+}
+
+.success {
+    color: #146c3a;
+}
+
+.status {
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.status.success {
+    color: #146c3a;
+}
+
+.status.error {
+    color: #b42318;
+}
+
 </style>
+
 </head>
+
 <body>
-<div class="wrap"><div class="card">
+
+<div class="wrap">
+
+<div class="card">
+
 <h1>Register in Online Banking</h1>
-<p>Use your existing Bank account to enroll.</p>
 
-<section id="step1" class="step active">
+<p>
+Use your existing Bank account to enroll.
+</p>
+
+
+<!-- =====================================================
+     STEP 1
+====================================================== -->
+
+<section
+    id="step1"
+    class="step active"
+>
+
 <h2>1. Verify Identity</h2>
+
 <form id="identityForm">
-<label>Account Number</label><input id="accountNumber" maxlength="30" autocomplete="off" required>
-<label>Last 4 digits of SSN</label><input id="ssnLast4" maxlength="4" inputmode="numeric" autocomplete="off" required>
-<label>Date of Birth</label><input id="dateOfBirth" type="date" required>
-<label>Enrollment Reference</label><input id="enrollmentReference" maxlength="64" autocomplete="off" required>
-<div id="verifyError" class="error"></div>
-<button type="submit">Continue</button>
+
+<label for="accountNumber">
+Account Number
+</label>
+
+<input
+    id="accountNumber"
+    type="text"
+    maxlength="20"
+    autocomplete="off"
+    required
+>
+
+
+<label for="ssnLast4">
+Last 4 digits of SSN
+</label>
+
+<input
+    id="ssnLast4"
+    type="text"
+    maxlength="4"
+    inputmode="numeric"
+    autocomplete="off"
+    required
+>
+
+
+<label for="dateOfBirth">
+Date of Birth
+</label>
+
+<input
+    id="dateOfBirth"
+    type="date"
+    required
+>
+
+
+<label for="enrollmentReference">
+Enrollment Reference
+</label>
+
+<input
+    id="enrollmentReference"
+    type="text"
+    maxlength="64"
+    autocomplete="off"
+    required
+>
+
+
+<div
+    id="verifyError"
+    class="error"
+></div>
+
+
+<button type="submit">
+Continue
+</button>
+
 </form>
+
 </section>
 
-<section id="step2" class="step">
+
+<!-- =====================================================
+     STEP 2
+====================================================== -->
+
+<section
+    id="step2"
+    class="step"
+>
+
 <h2>2. Create Credentials</h2>
+
 <form id="credentialsForm">
-<label>Username</label><input id="username" maxlength="20" autocomplete="username" required>
-<div id="usernameStatus" class="status"></div>
-<label>Password</label><input id="password" type="password" autocomplete="new-password" required>
-<label>Confirm Password</label><input id="confirmPassword" type="password" autocomplete="new-password" required>
-<div id="credentialError" class="error"></div>
-<button type="button" class="secondary" id="backBtn">Back</button>
-<button type="submit">Create Account</button>
+
+<label for="username">
+Username
+</label>
+
+<input
+    id="username"
+    type="text"
+    maxlength="20"
+    autocomplete="username"
+    required
+>
+
+<div
+    id="usernameStatus"
+    class="status"
+></div>
+
+
+<label for="password">
+Password
+</label>
+
+<input
+    id="password"
+    type="password"
+    autocomplete="new-password"
+    required
+>
+
+
+<label for="confirmPassword">
+Confirm Password
+</label>
+
+<input
+    id="confirmPassword"
+    type="password"
+    autocomplete="new-password"
+    required
+>
+
+
+<div
+    id="credentialError"
+    class="error"
+></div>
+
+
+<button
+    type="button"
+    class="secondary"
+    id="backBtn"
+>
+Back
+</button>
+
+<button type="submit">
+Create Account
+</button>
+
 </form>
+
 </section>
 
-<section id="step3" class="step">
-<h2 class="success">Enrollment Complete</h2>
-<p>Your online banking username is:</p><h3 id="createdUsername"></h3>
-<p><a href="login.html">Go to Login</a></p>
+
+<!-- =====================================================
+     STEP 3
+====================================================== -->
+
+<section
+    id="step3"
+    class="step"
+>
+
+<h2 class="success">
+Enrollment Complete
+</h2>
+
+<p>
+Your online banking username is:
+</p>
+
+<h3 id="createdUsername"></h3>
+
+<p>
+<a href="login.html">
+Go to Login
+</a>
+</p>
+
 </section>
-</div></div>
+
+</div>
+
+</div>
+
+
 <script src="register.js"></script>
+
 </body>
+
 </html>
