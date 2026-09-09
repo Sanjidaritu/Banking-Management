@@ -11,11 +11,12 @@ require_once __DIR__ . '/config.php';
 
 /*
 |--------------------------------------------------------------------------
-| Only POST requests
+| ONLY POST REQUESTS
 |--------------------------------------------------------------------------
 */
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+
     json_response([
         'success' => false,
         'message' => 'Method not allowed.'
@@ -25,13 +26,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 /*
 |--------------------------------------------------------------------------
-| Read JSON
+| READ JSON
 |--------------------------------------------------------------------------
 */
 
 $raw = file_get_contents('php://input');
 
 if ($raw === false || trim($raw) === '') {
+
     json_response([
         'success' => false,
         'message' => 'Request body is empty.'
@@ -41,6 +43,7 @@ if ($raw === false || trim($raw) === '') {
 $data = json_decode($raw, true);
 
 if (!is_array($data)) {
+
     json_response([
         'success' => false,
         'message' => 'Invalid JSON request.'
@@ -50,65 +53,59 @@ if (!is_array($data)) {
 
 /*
 |--------------------------------------------------------------------------
-| Get form values
+| GET FORM VALUES
 |--------------------------------------------------------------------------
 */
 
-$account = trim((string)($data['account_number'] ?? ''));
-$ssn4 = trim((string)($data['ssn_last4'] ?? ''));
-$dob = trim((string)($data['date_of_birth'] ?? ''));
-$reference = trim((string)($data['enrollment_reference'] ?? ''));
+$account = trim(
+    (string)($data['account_number'] ?? '')
+);
+
+$ssn4 = trim(
+    (string)($data['ssn_last4'] ?? '')
+);
+
+$dob = trim(
+    (string)($data['date_of_birth'] ?? '')
+);
+
+$reference = trim(
+    (string)($data['enrollment_reference'] ?? '')
+);
 
 
 /*
 |--------------------------------------------------------------------------
-| Validate account number
+| VALIDATION
 |--------------------------------------------------------------------------
 */
 
 if ($account === '') {
+
     json_response([
         'success' => false,
         'message' => 'Account number is required.'
     ], 400);
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| Validate SSN last 4
-|--------------------------------------------------------------------------
-*/
-
 if (!preg_match('/^\d{4}$/', $ssn4)) {
+
     json_response([
         'success' => false,
         'message' => 'SSN must contain exactly 4 digits.'
     ], 400);
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| Validate date of birth
-|--------------------------------------------------------------------------
-*/
-
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dob)) {
+
     json_response([
         'success' => false,
         'message' => 'Invalid date of birth.'
     ], 400);
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| Validate enrollment reference
-|--------------------------------------------------------------------------
-*/
-
 if ($reference === '') {
+
     json_response([
         'success' => false,
         'message' => 'Enrollment reference is required.'
@@ -118,17 +115,8 @@ if ($reference === '') {
 
 /*
 |--------------------------------------------------------------------------
-| Find existing bank customer
+| FIND CUSTOMER
 |--------------------------------------------------------------------------
-|
-| The customer must:
-|
-| - Have the supplied account number
-| - Have the supplied last 4 SSN digits
-| - Have the supplied DOB
-| - Be active
-| - Not already be enrolled
-|
 */
 
 try {
@@ -137,13 +125,21 @@ try {
         SELECT
             id,
             account_number,
-            enrollment_reference_hash
+            first_name,
+            last_name,
+            date_of_birth,
+            ssn_last4,
+            enrollment_reference_hash,
+            active,
+            online_enrolled,
+            account_status
         FROM customers
         WHERE account_number = :account_number
           AND ssn_last4 = :ssn_last4
           AND date_of_birth = :date_of_birth
           AND active = 1
           AND online_enrolled = 0
+          AND account_status = 'active'
         LIMIT 1
     ";
 
@@ -155,11 +151,14 @@ try {
         ':date_of_birth' => $dob
     ]);
 
-    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+    $customer = $stmt->fetch();
 
 } catch (Throwable $e) {
 
-    error_log('Customer verification query failed: ' . $e->getMessage());
+    error_log(
+        'Customer verification query failed: ' .
+        $e->getMessage()
+    );
 
     json_response([
         'success' => false,
@@ -170,7 +169,7 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| Customer not found
+| CUSTOMER NOT FOUND
 |--------------------------------------------------------------------------
 */
 
@@ -180,46 +179,59 @@ if (!$customer) {
 
     json_response([
         'success' => false,
-        'message' => 'The information could not be verified.'
+        'message' => 'The account information could not be verified.'
     ], 401);
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Verify enrollment reference
+| VERIFY ENROLLMENT REFERENCE
 |--------------------------------------------------------------------------
 */
 
-$referenceHash = $customer['enrollment_reference_hash'] ?? '';
+$hash = (string)(
+    $customer['enrollment_reference_hash'] ?? ''
+);
 
-if (
-    $referenceHash === '' ||
-    !password_verify($reference, $referenceHash)
-) {
+if ($hash === '') {
+
+    json_response([
+        'success' => false,
+        'message' => 'Enrollment reference is not configured for this customer.'
+    ], 401);
+}
+
+
+if (!password_verify($reference, $hash)) {
 
     usleep(250000);
 
     json_response([
         'success' => false,
-        'message' => 'The information could not be verified.'
+        'message' => 'The enrollment reference could not be verified.'
     ], 401);
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Create temporary enrollment token
+| CREATE SECURE ENROLLMENT TOKEN
 |--------------------------------------------------------------------------
 */
 
 try {
 
-    $token = bin2hex(random_bytes(32));
+    $token = bin2hex(
+        random_bytes(32)
+    );
 
 } catch (Throwable $e) {
 
-    error_log('Token generation failed: ' . $e->getMessage());
+    error_log(
+        'Enrollment token generation failed: ' .
+        $e->getMessage()
+    );
 
     json_response([
         'success' => false,
@@ -230,7 +242,7 @@ try {
 
 /*
 |--------------------------------------------------------------------------
-| Store enrollment session
+| STORE TOKEN IN SESSION
 |--------------------------------------------------------------------------
 */
 
@@ -246,7 +258,7 @@ $_SESSION['enrollment_expires'] = time() + 600;
 
 /*
 |--------------------------------------------------------------------------
-| Successful verification
+| SUCCESS
 |--------------------------------------------------------------------------
 */
 
