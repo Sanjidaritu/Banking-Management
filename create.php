@@ -2,254 +2,236 @@
 
 declare(strict_types=1);
 
+header('Content-Type: application/json; charset=utf-8');
+
 session_start();
 
 require_once __DIR__ . '/config.php';
 
-
-/* =========================================================
-   ONLY ALLOW POST REQUESTS
-   ========================================================= */
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
     json_response([
         'success' => false,
         'message' => 'Method not allowed.'
     ], 405);
-
-    exit;
 }
 
+$raw = file_get_contents('php://input');
 
-/* =========================================================
-   READ JSON REQUEST
-   ========================================================= */
+if ($raw === false || trim($raw) === '') {
+    json_response([
+        'success' => false,
+        'message' => 'Request body is empty.'
+    ], 400);
+}
 
-$data = json_input();
+$data = json_decode($raw, true);
 
-$token = (string)($data['enrollment_token'] ?? '');
+if (!is_array($data)) {
+    json_response([
+        'success' => false,
+        'message' => 'Invalid JSON request.'
+    ], 400);
+}
 
-$username = trim(
-    (string)($data['username'] ?? '')
-);
-
+$token = trim((string)($data['enrollment_token'] ?? ''));
+$username = trim((string)($data['username'] ?? ''));
 $password = (string)($data['password'] ?? '');
 
-
-/* =========================================================
-   VALIDATE USERNAME AND PASSWORD
-   ========================================================= */
-
-if (
-    !preg_match(
-        '/^[A-Za-z0-9_]{6,20}$/',
-        $username
-    )
-    ||
-    !preg_match(
-        '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,72}$/',
-        $password
-    )
-) {
-
+if ($token === '') {
     json_response([
         'success' => false,
-        'message' => 'Invalid credentials.'
-    ], 400);
-
-    exit;
-}
-
-
-/* =========================================================
-   CHECK ENROLLMENT SESSION
-   ========================================================= */
-
-if (
-    !$token
-    ||
-    empty($_SESSION['enrollment_token_hash'])
-    ||
-    empty($_SESSION['enrollment_customer_id'])
-    ||
-    empty($_SESSION['enrollment_expires'])
-    ||
-    time() > (int)$_SESSION['enrollment_expires']
-    ||
-    !hash_equals(
-        (string)$_SESSION['enrollment_token_hash'],
-        hash('sha256', $token)
-    )
-) {
-
-    json_response([
-        'success' => false,
-        'message' => 'Verification session expired. Start again.'
+        'message' => 'Enrollment session is missing.'
     ], 401);
-
-    exit;
 }
 
+if (
+    !isset($_SESSION['enrollment_token_hash']) ||
+    !isset($_SESSION['enrollment_customer_id']) ||
+    !isset($_SESSION['enrollment_expires'])
+) {
+    json_response([
+        'success' => false,
+        'message' => 'Enrollment session has expired. Please start again.'
+    ], 401);
+}
 
-/* =========================================================
-   DATABASE TRANSACTION
-   ========================================================= */
+if (time() > (int)$_SESSION['enrollment_expires']) {
+    json_response([
+        'success' => false,
+        'message' => 'Enrollment session has expired. Please start again.'
+    ], 401);
+}
+
+$tokenHash = hash('sha256', $token);
+
+if (!hash_equals(
+    (string)$_SESSION['enrollment_token_hash'],
+    $tokenHash
+)) {
+    json_response([
+        'success' => false,
+        'message' => 'Invalid enrollment session.'
+    ], 401);
+}
+
+if (!preg_match('/^[A-Za-z0-9_]{6,20}$/', $username)) {
+    json_response([
+        'success' => false,
+        'message' => 'Username must be 6 to 20 characters and contain only letters, numbers, or underscore.'
+    ], 400);
+}
+
+if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,72}$/', $password)) {
+    json_response([
+        'success' => false,
+        'message' => 'Password must be 12 to 72 characters and contain uppercase, lowercase, and a number.'
+    ], 400);
+}
+
+$customerId = (int)$_SESSION['enrollment_customer_id'];
 
 try {
 
-    $pdo->beginTransaction();
-
-
-    /* -----------------------------------------------------
-       GET CUSTOMER
-       ----------------------------------------------------- */
-
-    $stmt = $pdo->prepare(
-        'SELECT id, online_enrolled
-         FROM customers
-         WHERE id = :id
-           AND active = 1
-         FOR UPDATE'
-    );
+    /*
+     * Check that the customer still exists
+     * and has not already enrolled.
+     */
+    $stmt = $pdo->prepare("
+        SELECT
+            id,
+            online_enrolled,
+            active,
+            account_status
+        FROM customers
+        WHERE id = :id
+        LIMIT 1
+    ");
 
     $stmt->execute([
-        'id' => (int)$_SESSION['enrollment_customer_id']
+        ':id' => $customerId
     ]);
 
-    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+    $customer = $stmt->fetch();
 
-
-    /* -----------------------------------------------------
-       CHECK CUSTOMER
-       ----------------------------------------------------- */
-
-    if (
-        !$customer
-        ||
-        (int)$customer['online_enrolled'] === 1
-    ) {
-
-        $pdo->rollBack();
-
+    if (!$customer) {
         json_response([
             'success' => false,
-            'message' => 'This customer is already enrolled.'
-        ], 409);
-
-        exit;
+            'message' => 'Customer account was not found.'
+        ], 404);
     }
 
+    if ((int)$customer['active'] !== 1) {
+        json_response([
+            'success' => false,
+            'message' => 'Customer account is inactive.'
+        ], 403);
+    }
 
-    /* -----------------------------------------------------
-       CHECK USERNAME
-       ----------------------------------------------------- */
+    if ($customer['account_status'] !== 'active') {
+        json_response([
+            'success' => false,
+            'message' => 'Bank account is not active.'
+        ], 403);
+    }
 
-    $stmt = $pdo->prepare(
-        'SELECT id
-         FROM online_users
-         WHERE username = :username
-         LIMIT 1'
-    );
+    if ((int)$customer['online_enrolled'] === 1) {
+        json_response([
+            'success' => false,
+            'message' => 'This customer is already enrolled in online banking.'
+        ], 409);
+    }
+
+    /*
+     * Check username.
+     */
+    $stmt = $pdo->prepare("
+        SELECT id
+        FROM online_users
+        WHERE username = :username
+        LIMIT 1
+    ");
 
     $stmt->execute([
-        'username' => $username
+        ':username' => $username
     ]);
 
     if ($stmt->fetch()) {
-
-        $pdo->rollBack();
-
         json_response([
             'success' => false,
             'message' => 'Username is already taken.'
         ], 409);
-
-        exit;
     }
 
-
-    /* -----------------------------------------------------
-       HASH PASSWORD
-       ----------------------------------------------------- */
-
+    /*
+     * Hash password.
+     */
     $passwordHash = password_hash(
         $password,
         PASSWORD_DEFAULT
     );
 
-
     if ($passwordHash === false) {
-
-        throw new RuntimeException(
-            'Unable to securely hash password.'
-        );
+        json_response([
+            'success' => false,
+            'message' => 'Unable to secure password.'
+        ], 500);
     }
 
+    /*
+     * Create online banking user.
+     */
+    $pdo->beginTransaction();
 
-    /* -----------------------------------------------------
-       CREATE ONLINE USER
-       ----------------------------------------------------- */
-
-    $stmt = $pdo->prepare(
-        'INSERT INTO online_users
-            (customer_id, username, password_hash)
-         VALUES
-            (:customer_id, :username, :password_hash)'
-    );
-
-    $stmt->execute([
-        'customer_id' => (int)$customer['id'],
-        'username' => $username,
-        'password_hash' => $passwordHash
-    ]);
-
-
-    /* -----------------------------------------------------
-       MARK CUSTOMER AS ENROLLED
-       ----------------------------------------------------- */
-
-    $stmt = $pdo->prepare(
-        'UPDATE customers
-         SET online_enrolled = 1,
-             enrollment_reference_hash = NULL
-         WHERE id = :id'
-    );
+    $stmt = $pdo->prepare("
+        INSERT INTO online_users
+        (
+            customer_id,
+            username,
+            password_hash
+        )
+        VALUES
+        (
+            :customer_id,
+            :username,
+            :password_hash
+        )
+    ");
 
     $stmt->execute([
-        'id' => (int)$customer['id']
+        ':customer_id' => $customerId,
+        ':username' => $username,
+        ':password_hash' => $passwordHash
     ]);
 
+    /*
+     * Mark customer as enrolled.
+     */
+    $stmt = $pdo->prepare("
+        UPDATE customers
+        SET online_enrolled = 1
+        WHERE id = :id
+    ");
 
-    /* -----------------------------------------------------
-       COMPLETE TRANSACTION
-       ----------------------------------------------------- */
+    $stmt->execute([
+        ':id' => $customerId
+    ]);
 
     $pdo->commit();
 
-
-    /* -----------------------------------------------------
-       DELETE ENROLLMENT SESSION
-       ----------------------------------------------------- */
-
+    /*
+     * Remove enrollment session.
+     */
     unset(
         $_SESSION['enrollment_token_hash'],
         $_SESSION['enrollment_customer_id'],
         $_SESSION['enrollment_expires']
     );
 
-
-    /* -----------------------------------------------------
-       SUCCESS
-       ----------------------------------------------------- */
-
     json_response([
         'success' => true,
+        'message' => 'Online banking account created successfully.',
         'username' => $username
-    ], 201);
-
-    exit;
-
+    ]);
 
 } catch (Throwable $e) {
 
@@ -257,19 +239,13 @@ try {
         $pdo->rollBack();
     }
 
-
-    /* Do not expose database details to the browser */
-
     error_log(
-        'Enrollment create error: ' .
+        'Online banking account creation failed: ' .
         $e->getMessage()
     );
 
-
     json_response([
         'success' => false,
-        'message' => 'Unable to complete enrollment.'
+        'message' => 'Unable to create online banking account.'
     ], 500);
-
-    exit;
 }
