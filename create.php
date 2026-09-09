@@ -17,14 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $raw = file_get_contents('php://input');
 
-if ($raw === false || trim($raw) === '') {
-    json_response([
-        'success' => false,
-        'message' => 'Request body is empty.'
-    ], 400);
-}
-
-$data = json_decode($raw, true);
+$data = json_decode($raw ?: '', true);
 
 if (!is_array($data)) {
     json_response([
@@ -62,11 +55,9 @@ if (time() > (int)$_SESSION['enrollment_expires']) {
     ], 401);
 }
 
-$tokenHash = hash('sha256', $token);
-
 if (!hash_equals(
     (string)$_SESSION['enrollment_token_hash'],
-    $tokenHash
+    hash('sha256', $token)
 )) {
     json_response([
         'success' => false,
@@ -77,7 +68,7 @@ if (!hash_equals(
 if (!preg_match('/^[A-Za-z0-9_]{6,20}$/', $username)) {
     json_response([
         'success' => false,
-        'message' => 'Username must be 6 to 20 characters and contain only letters, numbers, or underscore.'
+        'message' => 'Username must be 6 to 20 characters.'
     ], 400);
 }
 
@@ -92,16 +83,9 @@ $customerId = (int)$_SESSION['enrollment_customer_id'];
 
 try {
 
-    /*
-     * Check that the customer still exists
-     * and has not already enrolled.
-     */
+    // Check customer
     $stmt = $pdo->prepare("
-        SELECT
-            id,
-            online_enrolled,
-            active,
-            account_status
+        SELECT id, active, online_enrolled, account_status
         FROM customers
         WHERE id = :id
         LIMIT 1
@@ -137,13 +121,11 @@ try {
     if ((int)$customer['online_enrolled'] === 1) {
         json_response([
             'success' => false,
-            'message' => 'This customer is already enrolled in online banking.'
+            'message' => 'This customer is already enrolled.'
         ], 409);
     }
 
-    /*
-     * Check username.
-     */
+    // Check username
     $stmt = $pdo->prepare("
         SELECT id
         FROM online_users
@@ -162,9 +144,7 @@ try {
         ], 409);
     }
 
-    /*
-     * Hash password.
-     */
+    // Hash password
     $passwordHash = password_hash(
         $password,
         PASSWORD_DEFAULT
@@ -177,23 +157,23 @@ try {
         ], 500);
     }
 
-    /*
-     * Create online banking user.
-     */
     $pdo->beginTransaction();
 
+    // Create online user
     $stmt = $pdo->prepare("
         INSERT INTO online_users
         (
             customer_id,
             username,
-            password_hash
+            password_hash,
+            active
         )
         VALUES
         (
             :customer_id,
             :username,
-            :password_hash
+            :password_hash,
+            1
         )
     ");
 
@@ -203,9 +183,7 @@ try {
         ':password_hash' => $passwordHash
     ]);
 
-    /*
-     * Mark customer as enrolled.
-     */
+    // Mark customer as enrolled
     $stmt = $pdo->prepare("
         UPDATE customers
         SET online_enrolled = 1
@@ -218,9 +196,7 @@ try {
 
     $pdo->commit();
 
-    /*
-     * Remove enrollment session.
-     */
+    // Destroy enrollment session
     unset(
         $_SESSION['enrollment_token_hash'],
         $_SESSION['enrollment_customer_id'],
@@ -240,8 +216,7 @@ try {
     }
 
     error_log(
-        'Online banking account creation failed: ' .
-        $e->getMessage()
+        'Create online user failed: ' . $e->getMessage()
     );
 
     json_response([
