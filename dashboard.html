@@ -1,5 +1,94 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Dashboard</title></head>
-<body><h1>Online Banking Dashboard</h1><p>You are logged in.</p><button id="logout">Logout</button>
-<script>
-document.getElementById("logout").onclick=async()=>{await fetch("api/auth/logout.php",{method:"POST"});location.href="login.html";}
-</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Online Banking Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="dashboard.css"
+    >
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div class="logo">
+            Horizon Bank
+        </div>
+
+        <button
+            id="logoutButton"
+            class="logout-button"
+        >
+            Logout
+        </button>
+
+    </header>
+
+
+    <main class="dashboard-container">
+
+        <section class="welcome-section">
+
+            <h1 id="welcomeMessage">
+                Welcome
+            </h1>
+
+            <p>
+                Here's a summary of your accounts.
+            </p>
+
+        </section>
+
+
+        <section class="accounts-section">
+
+            <div class="section-header">
+
+                <h2>
+                    Your Accounts
+                </h2>
+
+            </div>
+
+
+            <div
+                id="loading"
+                class="loading"
+            >
+                Loading your accounts...
+            </div>
+
+
+            <div
+                id="errorMessage"
+                class="error-message"
+                hidden
+            >
+            </div>
+
+
+            <div
+                id="accountsContainer"
+                class="accounts-container"
+            >
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="dashboard.js"></script>
+
+</body>
+
+</html>
