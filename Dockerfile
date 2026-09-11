@@ -1,9 +1,13 @@
-FROM php:8.3-cli
+FROM node:20
 
-RUN docker-php-ext-install pdo pdo_mysql
+WORKDIR /app
 
-COPY . /var/www/html
+COPY package*.json ./
 
-WORKDIR /var/www/html
+RUN npm install
 
-CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8080} -t /var/www/html"]
+COPY . .
+
+EXPOSE 8080
+
+CMD ["npm", "start"]
