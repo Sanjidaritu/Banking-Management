@@ -83,6 +83,10 @@ $("identityForm").addEventListener("submit", async e => {
     }
 
 
+    /* -----------------------------------------------------
+       SEND VERIFICATION REQUEST
+    ----------------------------------------------------- */
+
     try {
 
         const res = await fetch(
@@ -91,12 +95,11 @@ $("identityForm").addEventListener("submit", async e => {
                 method: "POST",
 
                 headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    "Accept":
-                        "application/json"
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
                 },
+
+                credentials: "include",
 
                 body: JSON.stringify(body)
             }
@@ -104,6 +107,7 @@ $("identityForm").addEventListener("submit", async e => {
 
 
         const text = await res.text();
+
 
         console.log(
             "VERIFY STATUS:",
@@ -116,13 +120,21 @@ $("identityForm").addEventListener("submit", async e => {
         );
 
 
+        /* -------------------------------------------------
+           EMPTY RESPONSE
+        ------------------------------------------------- */
+
         if (!text.trim()) {
 
             throw new Error(
-"/api/verify returned an empty response."
+                "/api/verify returned an empty response."
             );
         }
 
+
+        /* -------------------------------------------------
+           PARSE JSON
+        ------------------------------------------------- */
 
         let data;
 
@@ -138,10 +150,14 @@ $("identityForm").addEventListener("submit", async e => {
             );
 
             throw new Error(
-"/api/verify returned invalid JSON."
+                "/api/verify returned invalid JSON."
             );
         }
 
+
+        /* -------------------------------------------------
+           CHECK RESPONSE
+        ------------------------------------------------- */
 
         if (!res.ok || !data.success) {
 
@@ -166,7 +182,7 @@ $("identityForm").addEventListener("submit", async e => {
 
 
         /* -------------------------------------------------
-           STEP 2
+           MOVE TO STEP 2
         ------------------------------------------------- */
 
         $("step1")
@@ -233,6 +249,10 @@ $("username").addEventListener(
             "status";
 
 
+        /* -------------------------------------------------
+           VALIDATE USERNAME FORMAT
+        ------------------------------------------------- */
+
         if (
             !/^[A-Za-z0-9_]{6,20}$/.test(
                 username
@@ -245,8 +265,19 @@ $("username").addEventListener(
 
         try {
 
-            const res = await fetch("/api/check-username?username=" +
-                encodeURIComponent(username)
+            const res = await fetch(
+                "/api/check-username?username=" +
+                encodeURIComponent(username),
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    credentials: "include"
+                }
             );
 
 
@@ -258,12 +289,15 @@ $("username").addEventListener(
                 res.status
             );
 
-
             console.log(
                 "USERNAME RESPONSE:",
                 text
             );
 
+
+            /* -------------------------------------------------
+               EMPTY RESPONSE
+            ------------------------------------------------- */
 
             if (!text.trim()) {
 
@@ -279,6 +313,10 @@ $("username").addEventListener(
             }
 
 
+            /* -------------------------------------------------
+               PARSE JSON
+            ------------------------------------------------- */
+
             let data;
 
             try {
@@ -286,6 +324,11 @@ $("username").addEventListener(
                 data = JSON.parse(text);
 
             } catch (error) {
+
+                console.error(
+                    "USERNAME JSON ERROR:",
+                    error
+                );
 
                 $("usernameStatus")
                     .textContent =
@@ -298,6 +341,10 @@ $("username").addEventListener(
                 return;
             }
 
+
+            /* -------------------------------------------------
+               CHECK RESPONSE
+            ------------------------------------------------- */
 
             if (!res.ok || !data.success) {
 
@@ -313,6 +360,10 @@ $("username").addEventListener(
                 return;
             }
 
+
+            /* -------------------------------------------------
+               SHOW AVAILABILITY
+            ------------------------------------------------- */
 
             if (data.available) {
 
@@ -358,7 +409,7 @@ $("username").addEventListener(
 
 
 /* =========================================================
-   STEP 2 — CREATE ACCOUNT
+   STEP 2 — CREATE ONLINE BANKING ACCOUNT
 ========================================================= */
 
 $("credentialsForm").addEventListener(
@@ -381,7 +432,7 @@ $("credentialsForm").addEventListener(
 
 
         /* -------------------------------------------------
-           USERNAME
+           USERNAME VALIDATION
         ------------------------------------------------- */
 
         if (
@@ -399,7 +450,7 @@ $("credentialsForm").addEventListener(
 
 
         /* -------------------------------------------------
-           PASSWORD
+           PASSWORD VALIDATION
         ------------------------------------------------- */
 
         if (
@@ -430,7 +481,7 @@ $("credentialsForm").addEventListener(
 
 
         /* -------------------------------------------------
-           TOKEN
+           CHECK ENROLLMENT SESSION
         ------------------------------------------------- */
 
         if (!enrollmentToken) {
@@ -443,16 +494,14 @@ $("credentialsForm").addEventListener(
         }
 
 
-        /*
-         * create.php is the next endpoint.
-         *
-         * It will use the session created by verify.php.
-         */
+        /* -------------------------------------------------
+           CREATE ONLINE BANKING ACCOUNT
+        ------------------------------------------------- */
 
         try {
 
             const res = await fetch(
-              fetch("/api/create", {
+                "/api/create",
                 {
                     method: "POST",
 
@@ -463,6 +512,8 @@ $("credentialsForm").addEventListener(
                         "Accept":
                             "application/json"
                     },
+
+                    credentials: "include",
 
                     body: JSON.stringify({
 
@@ -494,13 +545,21 @@ $("credentialsForm").addEventListener(
             );
 
 
+            /* -------------------------------------------------
+               EMPTY RESPONSE
+            ------------------------------------------------- */
+
             if (!text.trim()) {
 
                 throw new Error(
-                    "create.php returned an empty response."
+                    "/api/create returned an empty response."
                 );
             }
 
+
+            /* -------------------------------------------------
+               PARSE JSON
+            ------------------------------------------------- */
 
             let data;
 
@@ -510,11 +569,20 @@ $("credentialsForm").addEventListener(
 
             } catch (error) {
 
+                console.error(
+                    "CREATE JSON ERROR:",
+                    error
+                );
+
                 throw new Error(
-                    "create.php returned invalid JSON."
+                    "/api/create returned invalid JSON."
                 );
             }
 
+
+            /* -------------------------------------------------
+               CHECK RESPONSE
+            ------------------------------------------------- */
 
             if (!res.ok || !data.success) {
 
@@ -525,10 +593,18 @@ $("credentialsForm").addEventListener(
             }
 
 
+            /* -------------------------------------------------
+               SHOW CREATED USERNAME
+            ------------------------------------------------- */
+
             $("createdUsername")
                 .textContent =
                 data.username;
 
+
+            /* -------------------------------------------------
+               MOVE TO STEP 3
+            ------------------------------------------------- */
 
             $("step2")
                 .classList
