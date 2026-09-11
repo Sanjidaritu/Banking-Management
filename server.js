@@ -36,8 +36,11 @@ app.use(
 
         cookie: {
             httpOnly: true,
+
             secure: process.env.NODE_ENV === "production",
+
             sameSite: "lax",
+
             maxAge: 1000 * 60 * 60
         }
     })
@@ -79,6 +82,18 @@ app.post("/api/verify", async (req, res) => {
     } = req.body;
 
 
+    console.log("=================================");
+    console.log("VERIFY REQUEST");
+    console.log("Account:", account_number);
+    console.log("SSN:", ssn_last4);
+    console.log("DOB:", date_of_birth);
+    console.log(
+        "Enrollment reference received:",
+        !!enrollment_reference
+    );
+    console.log("=================================");
+
+
     // --------------------------------------------------
     // Validate input
     // --------------------------------------------------
@@ -98,7 +113,7 @@ app.post("/api/verify", async (req, res) => {
     }
 
 
-    if (!/^\d{4}$/.test(String(ssn_last4))) {
+    if (!/^\d{4}$/.test(String(ssn_last4).trim())) {
 
         return res.status(400).json({
             success: false,
@@ -136,17 +151,60 @@ app.post("/api/verify", async (req, res) => {
         );
 
 
+        console.log(
+            "Customer rows found:",
+            rows.length
+        );
+
+
         if (rows.length === 0) {
+
+            console.log(
+                "VERIFY FAILED: Account not found"
+            );
 
             return res.status(401).json({
                 success: false,
-                message: "Account information could not be verified."
+                message:
+                    "Account information could not be verified."
             });
 
         }
 
 
         const customer = rows[0];
+
+
+        console.log(
+            "Customer ID:",
+            customer.id
+        );
+
+        console.log(
+            "Customer name:",
+            customer.first_name,
+            customer.last_name
+        );
+
+        console.log(
+            "Account type:",
+            customer.account_type
+        );
+
+        console.log(
+            "Account status:",
+            customer.account_status
+        );
+
+        console.log(
+            "Active:",
+            customer.active
+        );
+
+        console.log(
+            "Online enrolled:",
+            customer.online_enrolled
+        );
 
 
         // --------------------------------------------------
@@ -158,9 +216,14 @@ app.post("/api/verify", async (req, res) => {
             customer.account_status !== "active"
         ) {
 
+            console.log(
+                "VERIFY FAILED: Account inactive"
+            );
+
             return res.status(403).json({
                 success: false,
-                message: "This bank account is not active."
+                message:
+                    "This bank account is not active."
             });
 
         }
@@ -175,6 +238,10 @@ app.post("/api/verify", async (req, res) => {
             customer.account_type !== "savings"
         ) {
 
+            console.log(
+                "VERIFY FAILED: Invalid account type"
+            );
+
             return res.status(403).json({
                 success: false,
                 message:
@@ -188,14 +255,34 @@ app.post("/api/verify", async (req, res) => {
         // Check SSN
         // --------------------------------------------------
 
-        if (
-            String(customer.ssn_last4) !==
-            String(ssn_last4).trim()
-        ) {
+        const dbSSN =
+            String(customer.ssn_last4).trim();
+
+        const enteredSSN =
+            String(ssn_last4).trim();
+
+
+        console.log(
+            "DB SSN:",
+            dbSSN
+        );
+
+        console.log(
+            "Entered SSN:",
+            enteredSSN
+        );
+
+
+        if (dbSSN !== enteredSSN) {
+
+            console.log(
+                "VERIFY FAILED: SSN mismatch"
+            );
 
             return res.status(401).json({
                 success: false,
-                message: "Account information could not be verified."
+                message:
+                    "Account information could not be verified."
             });
 
         }
@@ -205,50 +292,142 @@ app.post("/api/verify", async (req, res) => {
         // Check DOB
         // --------------------------------------------------
 
-        const databaseDOB =
+        let databaseDOB;
+
+
+        if (
             customer.date_of_birth instanceof Date
-                ? customer.date_of_birth
-                      .toISOString()
-                      .slice(0, 10)
-                : String(customer.date_of_birth)
-                      .slice(0, 10);
+        ) {
+
+            databaseDOB =
+                customer.date_of_birth
+                    .toISOString()
+                    .slice(0, 10);
+
+        } else {
+
+            databaseDOB =
+                String(customer.date_of_birth)
+                    .slice(0, 10);
+
+        }
 
 
-        if (databaseDOB !== String(date_of_birth)) {
+        const enteredDOB =
+            String(date_of_birth)
+                .slice(0, 10);
+
+
+        console.log(
+            "DB DOB:",
+            databaseDOB
+        );
+
+        console.log(
+            "Entered DOB:",
+            enteredDOB
+        );
+
+
+        if (databaseDOB !== enteredDOB) {
+
+            console.log(
+                "VERIFY FAILED: DOB mismatch"
+            );
 
             return res.status(401).json({
                 success: false,
-                message: "Account information could not be verified."
+                message:
+                    "Account information could not be verified."
             });
 
         }
 
 
         // --------------------------------------------------
-        // Check enrollment reference
+        // Check enrollment reference hash
         // --------------------------------------------------
 
         if (
-            !customer.enrollment_reference_hash ||
-            !(await bcrypt.compare(
-                String(enrollment_reference).trim(),
-                customer.enrollment_reference_hash
-            ))
+            !customer.enrollment_reference_hash
         ) {
+
+            console.log(
+                "VERIFY FAILED: No enrollment reference hash"
+            );
 
             return res.status(401).json({
                 success: false,
-                message: "Account information could not be verified."
+                message:
+                    "Enrollment reference is not configured for this account."
+            });
+
+        }
+
+
+        /*
+         * PHP bcrypt hashes may start with $2y$.
+         *
+         * Convert $2y$ to $2b$ so Node bcrypt
+         * can compare the password/reference.
+         */
+
+        let storedHash =
+            String(
+                customer.enrollment_reference_hash
+            );
+
+
+        if (
+            storedHash.startsWith("$2y$")
+        ) {
+
+            storedHash =
+                "$2b$" +
+                storedHash.substring(4);
+
+        }
+
+
+        const enrollmentMatch =
+            await bcrypt.compare(
+                String(enrollment_reference).trim(),
+                storedHash
+            );
+
+
+        console.log(
+            "Enrollment reference match:",
+            enrollmentMatch
+        );
+
+
+        if (!enrollmentMatch) {
+
+            console.log(
+                "VERIFY FAILED: Enrollment reference mismatch"
+            );
+
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Account information could not be verified."
             });
 
         }
 
 
         // --------------------------------------------------
-        // Check whether already enrolled
+        // Check already enrolled
         // --------------------------------------------------
 
-        if (Number(customer.online_enrolled) === 1) {
+        if (
+            Number(customer.online_enrolled) === 1
+        ) {
+
+            console.log(
+                "VERIFY FAILED: Already enrolled"
+            );
 
             return res.status(409).json({
                 success: false,
@@ -271,8 +450,14 @@ app.post("/api/verify", async (req, res) => {
             customer.account_number;
 
 
+        console.log(
+            "VERIFY SUCCESS: Customer verified:",
+            customer.id
+        );
+
+
         // --------------------------------------------------
-        // Successful verification
+        // Send success response
         // --------------------------------------------------
 
         return res.json({
@@ -335,7 +520,9 @@ app.post("/api/verify", async (req, res) => {
 app.get("/api/check-username", async (req, res) => {
 
     const username =
-        String(req.query.username || "").trim();
+        String(
+            req.query.username || ""
+        ).trim();
 
 
     if (!username) {
@@ -354,15 +541,16 @@ app.get("/api/check-username", async (req, res) => {
 
     try {
 
-        const [rows] = await pool.execute(
-            `
-            SELECT id
-            FROM online_users
-            WHERE username = ?
-            LIMIT 1
-            `,
-            [username]
-        );
+        const [rows] =
+            await pool.execute(
+                `
+                SELECT id
+                FROM online_users
+                WHERE username = ?
+                LIMIT 1
+                `,
+                [username]
+            );
 
 
         return res.json({
@@ -412,7 +600,9 @@ app.post("/api/create", async (req, res) => {
     // Check enrollment session
     // --------------------------------------------------
 
-    if (!req.session.enrollment_customer_id) {
+    if (
+        !req.session.enrollment_customer_id
+    ) {
 
         return res.status(401).json({
 
@@ -430,9 +620,13 @@ app.post("/api/create", async (req, res) => {
     // Validate username
     // --------------------------------------------------
 
+    const cleanUsername =
+        String(username || "").trim();
+
+
     if (
         !/^[A-Za-z0-9_]{6,20}$/.test(
-            String(username || "")
+            cleanUsername
         )
     ) {
 
@@ -452,9 +646,13 @@ app.post("/api/create", async (req, res) => {
     // Validate password
     // --------------------------------------------------
 
+    const cleanPassword =
+        String(password || "");
+
+
     if (
         !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,72}$/
-            .test(String(password || ""))
+            .test(cleanPassword)
     ) {
 
         return res.status(400).json({
@@ -470,7 +668,9 @@ app.post("/api/create", async (req, res) => {
 
 
     const customerId =
-        req.session.enrollment_customer_id;
+        Number(
+            req.session.enrollment_customer_id
+        );
 
 
     try {
@@ -479,19 +679,20 @@ app.post("/api/create", async (req, res) => {
         // Check customer again
         // --------------------------------------------------
 
-        const [customers] = await pool.execute(
-            `
-            SELECT
-                id,
-                online_enrolled,
-                active,
-                account_status
-            FROM customers
-            WHERE id = ?
-            LIMIT 1
-            `,
-            [customerId]
-        );
+        const [customers] =
+            await pool.execute(
+                `
+                SELECT
+                    id,
+                    online_enrolled,
+                    active,
+                    account_status
+                FROM customers
+                WHERE id = ?
+                LIMIT 1
+                `,
+                [customerId]
+            );
 
 
         if (customers.length === 0) {
@@ -508,8 +709,13 @@ app.post("/api/create", async (req, res) => {
         }
 
 
-        const customer = customers[0];
+        const customer =
+            customers[0];
 
+
+        // --------------------------------------------------
+        // Check active status
+        // --------------------------------------------------
 
         if (
             Number(customer.active) !== 1 ||
@@ -528,7 +734,13 @@ app.post("/api/create", async (req, res) => {
         }
 
 
-        if (Number(customer.online_enrolled) === 1) {
+        // --------------------------------------------------
+        // Check already enrolled
+        // --------------------------------------------------
+
+        if (
+            Number(customer.online_enrolled) === 1
+        ) {
 
             return res.status(409).json({
 
@@ -543,18 +755,19 @@ app.post("/api/create", async (req, res) => {
 
 
         // --------------------------------------------------
-        // Check username again
+        // Check username
         // --------------------------------------------------
 
-        const [existingUsers] = await pool.execute(
-            `
-            SELECT id
-            FROM online_users
-            WHERE username = ?
-            LIMIT 1
-            `,
-            [String(username).trim()]
-        );
+        const [existingUsers] =
+            await pool.execute(
+                `
+                SELECT id
+                FROM online_users
+                WHERE username = ?
+                LIMIT 1
+                `,
+                [cleanUsername]
+            );
 
 
         if (existingUsers.length > 0) {
@@ -577,7 +790,7 @@ app.post("/api/create", async (req, res) => {
 
         const passwordHash =
             await bcrypt.hash(
-                String(password),
+                cleanPassword,
                 10
             );
 
@@ -601,7 +814,7 @@ app.post("/api/create", async (req, res) => {
             `,
             [
                 customerId,
-                String(username).trim(),
+                cleanUsername,
                 passwordHash
             ]
         );
@@ -638,7 +851,7 @@ app.post("/api/create", async (req, res) => {
                 "Online banking account created successfully.",
 
             username:
-                String(username).trim()
+                cleanUsername
 
         });
 
@@ -692,20 +905,21 @@ app.post("/api/login", async (req, res) => {
 
     try {
 
-        const [rows] = await pool.execute(
-            `
-            SELECT
-                id,
-                customer_id,
-                username,
-                password_hash,
-                active
-            FROM online_users
-            WHERE username = ?
-            LIMIT 1
-            `,
-            [String(username).trim()]
-        );
+        const [rows] =
+            await pool.execute(
+                `
+                SELECT
+                    id,
+                    customer_id,
+                    username,
+                    password_hash,
+                    active
+                FROM online_users
+                WHERE username = ?
+                LIMIT 1
+                `,
+                [String(username).trim()]
+            );
 
 
         if (rows.length === 0) {
@@ -722,10 +936,13 @@ app.post("/api/login", async (req, res) => {
         }
 
 
-        const user = rows[0];
+        const user =
+            rows[0];
 
 
-        if (Number(user.active) !== 1) {
+        if (
+            Number(user.active) !== 1
+        ) {
 
             return res.status(403).json({
 
@@ -742,7 +959,7 @@ app.post("/api/login", async (req, res) => {
         const passwordMatch =
             await bcrypt.compare(
                 String(password),
-                user.password_hash
+                String(user.password_hash)
             );
 
 
@@ -822,32 +1039,35 @@ app.get("/api/dashboard", async (req, res) => {
 
 
     const customerId =
-        req.session.customer_id;
+        Number(
+            req.session.customer_id
+        );
 
 
     try {
 
-        const [rows] = await pool.execute(
-            `
-            SELECT
-                id,
-                first_name,
-                last_name,
-                account_number,
-                account_type,
-                current_balance,
-                available_balance,
-                account_status,
-                active
-            FROM customers
-            WHERE id = ?
-              AND active = 1
-              AND account_status = 'active'
-              AND account_type IN ('checking', 'savings')
-            ORDER BY account_type, id
-            `,
-            [customerId]
-        );
+        const [rows] =
+            await pool.execute(
+                `
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    account_number,
+                    account_type,
+                    current_balance,
+                    available_balance,
+                    account_status,
+                    active
+                FROM customers
+                WHERE id = ?
+                  AND active = 1
+                  AND account_status = 'active'
+                  AND account_type IN ('checking', 'savings')
+                ORDER BY account_type, id
+                `,
+                [customerId]
+            );
 
 
         if (rows.length === 0) {
@@ -867,14 +1087,18 @@ app.get("/api/dashboard", async (req, res) => {
         }
 
 
-        const customer = rows[0];
+        const customer =
+            rows[0];
 
 
         const accounts =
             rows.map(account => {
 
                 const accountNumber =
-                    String(account.account_number);
+                    String(
+                        account.account_number
+                    );
+
 
                 const lastFour =
                     accountNumber.slice(-4);
@@ -891,10 +1115,14 @@ app.get("/api/dashboard", async (req, res) => {
                         `••••${lastFour}`,
 
                     currentBalance:
-                        Number(account.current_balance || 0),
+                        Number(
+                            account.current_balance || 0
+                        ),
 
                     availableBalance:
-                        Number(account.available_balance || 0)
+                        Number(
+                            account.available_balance || 0
+                        )
 
                 };
 
@@ -1044,6 +1272,15 @@ app.get("/dashboard", (req, res) => {
 });
 
 
+app.get("/register", (req, res) => {
+
+    res.sendFile(
+        path.join(__dirname, "register.html")
+    );
+
+});
+
+
 app.get("/", (req, res) => {
 
     res.sendFile(
@@ -1072,3 +1309,4 @@ app.listen(
 
     }
 );
+
