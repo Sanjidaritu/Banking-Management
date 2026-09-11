@@ -245,8 +245,7 @@ $("username").addEventListener(
 
         try {
 
-            const res = await fetch(
-                "check-username.php?username=" +
+            const res = await fetch("/api/check-username?username=" +
                 encodeURIComponent(username)
             );
 
@@ -453,7 +452,7 @@ $("credentialsForm").addEventListener(
         try {
 
             const res = await fetch(
-                "create.php",
+              fetch("/api/create", {
                 {
                     method: "POST",
 
