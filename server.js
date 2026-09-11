@@ -10,6 +10,13 @@ const app = express();
 
 
 // ======================================================
+// BASIC CONFIGURATION
+// ======================================================
+
+const PORT = process.env.PORT || 8080;
+
+
+// ======================================================
 // MIDDLEWARE
 // ======================================================
 
@@ -20,6 +27,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Important when running behind Railway's proxy
+app.set("trust proxy", 1);
 
 
 // ======================================================
@@ -60,7 +70,7 @@ app.use(express.static(__dirname));
 
 app.get("/api/health", (req, res) => {
 
-    res.json({
+    return res.json({
         success: true,
         message: "Node.js API is running"
     });
@@ -82,16 +92,18 @@ app.post("/api/verify", async (req, res) => {
     } = req.body;
 
 
-    console.log("=================================");
-    console.log("VERIFY REQUEST");
+    console.log("");
+    console.log("========================================");
+    console.log("VERIFY CUSTOMER REQUEST");
+    console.log("========================================");
+
     console.log("Account:", account_number);
-    console.log("SSN:", ssn_last4);
+    console.log("SSN last 4:", ssn_last4);
     console.log("DOB:", date_of_birth);
     console.log(
         "Enrollment reference received:",
         !!enrollment_reference
     );
-    console.log("=================================");
 
 
     // --------------------------------------------------
@@ -113,7 +125,24 @@ app.post("/api/verify", async (req, res) => {
     }
 
 
-    if (!/^\d{4}$/.test(String(ssn_last4).trim())) {
+    const cleanAccountNumber =
+        String(account_number).trim();
+
+    const cleanSSN =
+        String(ssn_last4).trim();
+
+    const cleanDOB =
+        String(date_of_birth).trim();
+
+    const cleanEnrollmentReference =
+        String(enrollment_reference).trim();
+
+
+    // --------------------------------------------------
+    // Validate SSN
+    // --------------------------------------------------
+
+    if (!/^\d{4}$/.test(cleanSSN)) {
 
         return res.status(400).json({
             success: false,
@@ -129,28 +158,29 @@ app.post("/api/verify", async (req, res) => {
         // Find customer
         // --------------------------------------------------
 
-        const [rows] = await pool.execute(
-            `
-            SELECT
-                id,
-                first_name,
-                last_name,
-                account_number,
-                date_of_birth,
-                ssn_last4,
-                enrollment_reference_hash,
-                active,
-                online_enrolled,
-                account_type,
-                account_status
-            FROM customers
-            WHERE account_number = ?
-            LIMIT 1
-            `,
-            [
-                String(account_number).trim()
-            ]
-        );
+        const [rows] =
+            await pool.execute(
+                `
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    account_number,
+                    date_of_birth,
+                    ssn_last4,
+                    enrollment_reference_hash,
+                    active,
+                    online_enrolled,
+                    account_type,
+                    account_status
+                FROM customers
+                WHERE account_number = ?
+                LIMIT 1
+                `,
+                [
+                    cleanAccountNumber
+                ]
+            );
 
 
         console.log(
@@ -174,7 +204,8 @@ app.post("/api/verify", async (req, res) => {
         }
 
 
-        const customer = rows[0];
+        const customer =
+            rows[0];
 
 
         console.log(
@@ -182,31 +213,25 @@ app.post("/api/verify", async (req, res) => {
             customer.id
         );
 
-
         console.log(
-            "Customer name:",
-            customer.first_name,
-            customer.last_name
+            "Customer:",
+            `${customer.first_name} ${customer.last_name}`
         );
-
 
         console.log(
             "Account type:",
             customer.account_type
         );
 
-
         console.log(
             "Account status:",
             customer.account_status
         );
 
-
         console.log(
             "Active:",
             customer.active
         );
-
 
         console.log(
             "Online enrolled:",
@@ -215,12 +240,13 @@ app.post("/api/verify", async (req, res) => {
 
 
         // --------------------------------------------------
-        // Check account status
+        // Check active account
         // --------------------------------------------------
 
         if (
             Number(customer.active) !== 1 ||
-            customer.account_status !== "active"
+            String(customer.account_status)
+                .toLowerCase() !== "active"
         ) {
 
             console.log(
@@ -240,9 +266,14 @@ app.post("/api/verify", async (req, res) => {
         // Check account type
         // --------------------------------------------------
 
+        const accountType =
+            String(customer.account_type)
+                .toLowerCase();
+
+
         if (
-            customer.account_type !== "checking" &&
-            customer.account_type !== "savings"
+            accountType !== "checking" &&
+            accountType !== "savings"
         ) {
 
             console.log(
@@ -262,27 +293,11 @@ app.post("/api/verify", async (req, res) => {
         // Check SSN
         // --------------------------------------------------
 
-        const dbSSN =
+        const databaseSSN =
             String(customer.ssn_last4).trim();
 
 
-        const enteredSSN =
-            String(ssn_last4).trim();
-
-
-        console.log(
-            "DB SSN:",
-            dbSSN
-        );
-
-
-        console.log(
-            "Entered SSN:",
-            enteredSSN
-        );
-
-
-        if (dbSSN !== enteredSSN) {
+        if (databaseSSN !== cleanSSN) {
 
             console.log(
                 "VERIFY FAILED: SSN mismatch"
@@ -323,15 +338,13 @@ app.post("/api/verify", async (req, res) => {
 
 
         const enteredDOB =
-            String(date_of_birth)
-                .slice(0, 10);
+            cleanDOB.slice(0, 10);
 
 
         console.log(
-            "DB DOB:",
+            "Database DOB:",
             databaseDOB
         );
-
 
         console.log(
             "Entered DOB:",
@@ -363,7 +376,7 @@ app.post("/api/verify", async (req, res) => {
         ) {
 
             console.log(
-                "VERIFY FAILED: No enrollment reference hash"
+                "VERIFY FAILED: Missing enrollment reference hash"
             );
 
             return res.status(401).json({
@@ -375,18 +388,14 @@ app.post("/api/verify", async (req, res) => {
         }
 
 
-        /*
-         * PHP bcrypt hashes may start with $2y$.
-         *
-         * Convert $2y$ to $2b$ so Node bcrypt
-         * can compare the reference.
-         */
-
         let storedHash =
             String(
                 customer.enrollment_reference_hash
             );
 
+
+        // PHP bcrypt uses $2y$
+        // Node bcrypt normally expects $2a$ / $2b$
 
         if (
             storedHash.startsWith("$2y$")
@@ -401,7 +410,7 @@ app.post("/api/verify", async (req, res) => {
 
         const enrollmentMatch =
             await bcrypt.compare(
-                String(enrollment_reference).trim(),
+                cleanEnrollmentReference,
                 storedHash
             );
 
@@ -455,85 +464,84 @@ app.post("/api/verify", async (req, res) => {
         req.session.enrollment_customer_id =
             Number(customer.id);
 
-
         req.session.enrollment_account_number =
-            customer.account_number;
+            String(customer.account_number);
 
 
-        console.log(
-            "VERIFY SUCCESS: Customer verified:",
-            customer.id
-        );
+        // Explicitly save session before responding.
+        // This prevents Step 2 from reaching the API
+        // before the session has been persisted.
+
+        req.session.save((sessionError) => {
+
+            if (sessionError) {
+
+                console.error(
+                    "SESSION SAVE ERROR:",
+                    sessionError
+                );
+
+                return res.status(500).json({
+                    success: false,
+                    message:
+                        "Unable to create verification session."
+                });
+
+            }
 
 
-        // --------------------------------------------------
-        // Send success response
-        // --------------------------------------------------
+            console.log(
+                "VERIFY SUCCESS"
+            );
 
-        return res.json({
+            console.log(
+                "Enrollment customer ID:",
+                req.session.enrollment_customer_id
+            );
 
-            success: true,
 
-            message:
-                "Identity verified successfully.",
+            return res.json({
 
-            customer: {
+                success: true,
 
-                id:
-                    Number(customer.id),
+                message:
+                    "Identity verified successfully.",
 
-                first_name:
-                    customer.first_name,
+                customer: {
 
-                last_name:
-                    customer.last_name,
+                    id:
+                        Number(customer.id),
 
-                account_number:
-                    customer.account_number,
+                    first_name:
+                        customer.first_name,
 
-                account_type:
-                    customer.account_type
+                    last_name:
+                        customer.last_name,
 
-            },
+                    account_number:
+                        customer.account_number,
 
-            enrollment_token:
-                "verified"
+                    account_type:
+                        customer.account_type
+
+                }
+
+            });
 
         });
 
+
     } catch (error) {
 
-        console.error(
-            "================================="
-        );
-
-        console.error(
-            "VERIFICATION ERROR"
-        );
-
-        console.error(
-            "Message:",
-            error.message
-        );
-
-        console.error(
-            "SQL Message:",
-            error.sqlMessage
-        );
-
-        console.error(
-            "SQL State:",
-            error.sqlState
-        );
-
-        console.error(
-            "Error Code:",
-            error.code
-        );
-
-        console.error(
-            "================================="
-        );
+        console.error("");
+        console.error("========================================");
+        console.error("VERIFICATION DATABASE ERROR");
+        console.error("========================================");
+        console.error("Message:", error.message);
+        console.error("SQL Message:", error.sqlMessage);
+        console.error("SQL State:", error.sqlState);
+        console.error("Code:", error.code);
+        console.error("========================================");
 
 
         return res.status(500).json({
@@ -581,6 +589,37 @@ app.get("/api/check-username", async (req, res) => {
     }
 
 
+    // --------------------------------------------------
+    // Username rule
+    //
+    // 8-12 characters
+    // First 3 must be letters
+    // Remaining can be letters/numbers
+    // No underscore
+    // No spaces
+    // --------------------------------------------------
+
+    if (
+        !/^[A-Za-z]{3}[A-Za-z0-9]{5,9}$/
+            .test(username)
+    ) {
+
+        return res.json({
+
+            success: true,
+
+            available: false,
+
+            valid: false,
+
+            message:
+                "Username must be 8-12 characters. The first 3 characters must be letters and only letters and numbers are allowed."
+
+        });
+
+    }
+
+
     try {
 
         const [rows] =
@@ -602,9 +641,17 @@ app.get("/api/check-username", async (req, res) => {
             success: true,
 
             available:
+                rows.length === 0,
+
+            valid: true,
+
+            message:
                 rows.length === 0
+                    ? "Username is available."
+                    : "Username is already taken."
 
         });
+
 
     } catch (error) {
 
@@ -645,18 +692,30 @@ app.post("/api/create", async (req, res) => {
     } = req.body;
 
 
-    console.log("=================================");
-    console.log("CREATE ACCOUNT REQUEST");
-    console.log("Username:", username);
+    console.log("");
+    console.log("========================================");
+    console.log("CREATE ONLINE BANKING ACCOUNT");
+    console.log("========================================");
+
+    console.log(
+        "Username:",
+        username
+    );
+
     console.log(
         "Password received:",
         !!password
     );
+
+    console.log(
+        "Session ID:",
+        req.sessionID
+    );
+
     console.log(
         "Enrollment customer ID:",
         req.session.enrollment_customer_id
     );
-    console.log("=================================");
 
 
     // --------------------------------------------------
@@ -667,12 +726,16 @@ app.post("/api/create", async (req, res) => {
         !req.session.enrollment_customer_id
     ) {
 
+        console.log(
+            "CREATE FAILED: Enrollment session missing"
+        );
+
         return res.status(401).json({
 
             success: false,
 
             message:
-                "Your verification session has expired. Start again."
+                "Your verification session has expired. Please verify your account again."
 
         });
 
@@ -680,23 +743,24 @@ app.post("/api/create", async (req, res) => {
 
 
     // --------------------------------------------------
-    // Validate username
+    // Clean username
     // --------------------------------------------------
 
     const cleanUsername =
         String(username || "").trim();
 
 
-    /*
-     * Username:
-     * 6-20 characters
-     * Letters, numbers, underscore
-     */
+    // --------------------------------------------------
+    // Username validation
+    //
+    // 8-12 characters
+    // First 3 must be letters
+    // Remaining characters letters/numbers
+    // --------------------------------------------------
 
     if (
-        !/^[A-Za-z0-9_]{6,20}$/.test(
-            cleanUsername
-        )
+        !/^[A-Za-z]{3}[A-Za-z0-9]{5,9}$/
+            .test(cleanUsername)
     ) {
 
         return res.status(400).json({
@@ -704,7 +768,7 @@ app.post("/api/create", async (req, res) => {
             success: false,
 
             message:
-                "Username must be 6-20 characters using letters, numbers, or underscores."
+                "Username must be 8-12 characters. The first 3 characters must be letters and only letters and numbers are allowed."
 
         });
 
@@ -712,24 +776,25 @@ app.post("/api/create", async (req, res) => {
 
 
     // --------------------------------------------------
-    // Validate password
+    // Clean password
     // --------------------------------------------------
 
     const cleanPassword =
         String(password || "");
 
 
-    /*
-     * Password:
-     * 12-72 characters
-     * At least one lowercase
-     * At least one uppercase
-     * At least one number
-     */
+    // --------------------------------------------------
+    // Password validation
+    //
+    // 12-72 characters
+    // At least lowercase
+    // At least uppercase
+    // At least number
+    // --------------------------------------------------
 
     if (
-        !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,72}$/
-            .test(cleanPassword)
+        cleanPassword.length < 12 ||
+        cleanPassword.length > 72
     ) {
 
         return res.status(400).json({
@@ -737,22 +802,64 @@ app.post("/api/create", async (req, res) => {
             success: false,
 
             message:
-                "Password must be 12-72 characters and include uppercase, lowercase, and a number."
+                "Password must be between 12 and 72 characters."
 
         });
 
     }
 
 
+    if (!/[a-z]/.test(cleanPassword)) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            message:
+                "Password must contain at least one lowercase letter."
+
+        });
+
+    }
+
+
+    if (!/[A-Z]/.test(cleanPassword)) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            message:
+                "Password must contain at least one uppercase letter."
+
+        });
+
+    }
+
+
+    if (!/\d/.test(cleanPassword)) {
+
+        return res.status(400).json({
+
+            success: false,
+
+            message:
+                "Password must contain at least one number."
+
+        });
+
+    }
+
+
+    // --------------------------------------------------
+    // Get customer ID from session
+    // --------------------------------------------------
+
     const customerId =
         Number(
             req.session.enrollment_customer_id
         );
 
-
-    // --------------------------------------------------
-    // Validate customer ID
-    // --------------------------------------------------
 
     if (
         !Number.isInteger(customerId) ||
@@ -777,11 +884,16 @@ app.post("/api/create", async (req, res) => {
     try {
 
         // --------------------------------------------------
-        // Get database connection
+        // Get connection
         // --------------------------------------------------
 
         connection =
             await pool.getConnection();
+
+
+        console.log(
+            "Database connection acquired."
+        );
 
 
         // --------------------------------------------------
@@ -797,7 +909,7 @@ app.post("/api/create", async (req, res) => {
 
 
         // --------------------------------------------------
-        // Check customer again
+        // Lock customer record
         // --------------------------------------------------
 
         const [customers] =
@@ -805,9 +917,11 @@ app.post("/api/create", async (req, res) => {
                 `
                 SELECT
                     id,
+                    account_number,
                     online_enrolled,
                     active,
-                    account_status
+                    account_status,
+                    account_type
                 FROM customers
                 WHERE id = ?
                 LIMIT 1
@@ -825,7 +939,9 @@ app.post("/api/create", async (req, res) => {
         );
 
 
-        if (customers.length === 0) {
+        if (
+            customers.length === 0
+        ) {
 
             await connection.rollback();
 
@@ -846,18 +962,19 @@ app.post("/api/create", async (req, res) => {
 
 
         console.log(
-            "Customer:",
+            "Customer record:",
             customer
         );
 
 
         // --------------------------------------------------
-        // Check active status
+        // Verify account status
         // --------------------------------------------------
 
         if (
             Number(customer.active) !== 1 ||
-            customer.account_status !== "active"
+            String(customer.account_status)
+                .toLowerCase() !== "active"
         ) {
 
             await connection.rollback();
@@ -875,7 +992,35 @@ app.post("/api/create", async (req, res) => {
 
 
         // --------------------------------------------------
-        // Check already enrolled
+        // Verify account type
+        // --------------------------------------------------
+
+        const accountType =
+            String(customer.account_type)
+                .toLowerCase();
+
+
+        if (
+            accountType !== "checking" &&
+            accountType !== "savings"
+        ) {
+
+            await connection.rollback();
+
+            return res.status(403).json({
+
+                success: false,
+
+                message:
+                    "This account is not eligible for online banking."
+
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // Check existing enrollment
         // --------------------------------------------------
 
         if (
@@ -903,7 +1048,8 @@ app.post("/api/create", async (req, res) => {
         const [existingUsers] =
             await connection.execute(
                 `
-                SELECT id
+                SELECT
+                    id
                 FROM online_users
                 WHERE username = ?
                 LIMIT 1
@@ -931,7 +1077,7 @@ app.post("/api/create", async (req, res) => {
                 success: false,
 
                 message:
-                    "Username is already taken."
+                    "Username is already taken. Please choose another username."
 
             });
 
@@ -955,16 +1101,16 @@ app.post("/api/create", async (req, res) => {
 
 
         console.log(
-            "Password hashed successfully."
+            "Password hashed."
         );
 
 
         // --------------------------------------------------
-        // Create online user
+        // Insert online user
         // --------------------------------------------------
 
         console.log(
-            "Creating online user..."
+            "Inserting online user..."
         );
 
 
@@ -980,7 +1126,8 @@ app.post("/api/create", async (req, res) => {
                     created_at,
                     updated_at
                 )
-                VALUES (?, ?, ?, 1, NOW(), NOW())
+                VALUES
+                (?, ?, ?, 1, NOW(), NOW())
                 `,
                 [
                     customerId,
@@ -991,17 +1138,21 @@ app.post("/api/create", async (req, res) => {
 
 
         console.log(
-            "Online user created:",
+            "Online user inserted."
+        );
+
+        console.log(
+            "New online user ID:",
             insertResult.insertId
         );
 
 
         // --------------------------------------------------
-        // Mark customer as enrolled
+        // Update customer
         // --------------------------------------------------
 
         console.log(
-            "Updating customer enrollment status..."
+            "Updating customer online enrollment..."
         );
 
 
@@ -1019,13 +1170,24 @@ app.post("/api/create", async (req, res) => {
 
 
         console.log(
-            "Customer updated:",
+            "Customer rows updated:",
             updateResult.affectedRows
         );
 
 
+        if (
+            updateResult.affectedRows !== 1
+        ) {
+
+            throw new Error(
+                "Customer enrollment status could not be updated."
+            );
+
+        }
+
+
         // --------------------------------------------------
-        // Commit transaction
+        // Commit
         // --------------------------------------------------
 
         await connection.commit();
@@ -1040,24 +1202,43 @@ app.post("/api/create", async (req, res) => {
         // Remove enrollment session
         // --------------------------------------------------
 
-        delete req.session.enrollment_customer_id;
+        req.session.enrollment_customer_id = null;
+        req.session.enrollment_account_number = null;
 
-        delete req.session.enrollment_account_number;
+
+        req.session.save((sessionError) => {
+
+            if (sessionError) {
+
+                console.error(
+                    "Session cleanup error:",
+                    sessionError
+                );
+
+            }
 
 
-        // --------------------------------------------------
-        // Send success response
-        // --------------------------------------------------
+            console.log(
+                "Online banking account creation SUCCESS."
+            );
 
-        return res.json({
 
-            success: true,
+            console.log(
+                "========================================"
+            );
 
-            message:
-                "Online banking account created successfully.",
 
-            username:
-                cleanUsername
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Online banking account created successfully.",
+
+                username:
+                    cleanUsername
+
+            });
 
         });
 
@@ -1065,7 +1246,7 @@ app.post("/api/create", async (req, res) => {
     } catch (error) {
 
         // --------------------------------------------------
-        // Rollback transaction
+        // Rollback
         // --------------------------------------------------
 
         if (connection) {
@@ -1091,16 +1272,13 @@ app.post("/api/create", async (req, res) => {
 
 
         // --------------------------------------------------
-        // Show REAL error
+        // Log complete database error
         // --------------------------------------------------
 
-        console.error(
-            "================================="
-        );
-
-        console.error(
-            "CREATE ACCOUNT ERROR"
-        );
+        console.error("");
+        console.error("========================================");
+        console.error("CREATE ACCOUNT ERROR");
+        console.error("========================================");
 
         console.error(
             "Message:",
@@ -1128,8 +1306,55 @@ app.post("/api/create", async (req, res) => {
         );
 
         console.error(
-            "================================="
-        );
+            "========================================");
+
+
+        let message =
+            error.sqlMessage ||
+            error.message ||
+            "Unknown database error";
+
+
+        // More user-friendly MySQL messages
+
+        if (
+            error.code === "ER_DUP_ENTRY"
+        ) {
+
+            message =
+                "This username already exists. Please choose another username.";
+
+        }
+
+
+        if (
+            error.code === "ER_NO_REFERENCED_ROW_2"
+        ) {
+
+            message =
+                "The customer account could not be linked to the online banking account.";
+
+        }
+
+
+        if (
+            error.code === "ER_BAD_FIELD_ERROR"
+        ) {
+
+            message =
+                "The database structure does not match the application. Check the online_users table columns.";
+
+        }
+
+
+        if (
+            error.code === "ER_NO_SUCH_TABLE"
+        ) {
+
+            message =
+                "The online_users table does not exist in the database.";
+
+        }
 
 
         return res.status(500).json({
@@ -1140,17 +1365,11 @@ app.post("/api/create", async (req, res) => {
                 "Could not create online banking account.",
 
             error:
-                error.sqlMessage ||
-                error.message ||
-                "Unknown database error"
+                message
 
         });
 
     } finally {
-
-        // --------------------------------------------------
-        // Release connection
-        // --------------------------------------------------
 
         if (connection) {
 
@@ -1179,9 +1398,16 @@ app.post("/api/login", async (req, res) => {
     } = req.body;
 
 
+    const cleanUsername =
+        String(username || "").trim();
+
+    const cleanPassword =
+        String(password || "");
+
+
     if (
-        !username ||
-        !password
+        !cleanUsername ||
+        !cleanPassword
     ) {
 
         return res.status(400).json({
@@ -1212,7 +1438,7 @@ app.post("/api/login", async (req, res) => {
                 LIMIT 1
                 `,
                 [
-                    String(username).trim()
+                    cleanUsername
                 ]
             );
 
@@ -1257,11 +1483,7 @@ app.post("/api/login", async (req, res) => {
             String(user.password_hash);
 
 
-        /*
-         * Support bcrypt hashes created by PHP
-         * that begin with $2y$.
-         */
-
+        // Support PHP bcrypt $2y$
         if (
             storedPasswordHash.startsWith("$2y$")
         ) {
@@ -1275,7 +1497,7 @@ app.post("/api/login", async (req, res) => {
 
         const passwordMatch =
             await bcrypt.compare(
-                String(password),
+                cleanPassword,
                 storedPasswordHash
             );
 
@@ -1294,31 +1516,57 @@ app.post("/api/login", async (req, res) => {
         }
 
 
+        // --------------------------------------------------
+        // Create login session
+        // --------------------------------------------------
+
         req.session.user_id =
             Number(user.id);
 
-
         req.session.customer_id =
             Number(user.customer_id);
-
 
         req.session.username =
             user.username;
 
 
-        return res.json({
+        req.session.save((sessionError) => {
 
-            success: true,
+            if (sessionError) {
 
-            message:
-                "Login successful."
+                console.error(
+                    "Login session error:",
+                    sessionError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to create login session."
+
+                });
+
+            }
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Login successful."
+
+            });
 
         });
+
 
     } catch (error) {
 
         console.error(
-            "Login error:",
+            "LOGIN ERROR:",
             error
         );
 
@@ -1477,10 +1725,11 @@ app.get("/api/dashboard", async (req, res) => {
 
         });
 
+
     } catch (error) {
 
         console.error(
-            "Dashboard error:",
+            "DASHBOARD ERROR:",
             error
         );
 
@@ -1642,7 +1891,25 @@ app.get("/", (req, res) => {
 
 
 // ======================================================
-// ERROR HANDLER
+// 404 API HANDLER
+// ======================================================
+
+app.use("/api", (req, res) => {
+
+    return res.status(404).json({
+
+        success: false,
+
+        message:
+            "API endpoint not found."
+
+    });
+
+});
+
+
+// ======================================================
+// GLOBAL ERROR HANDLER
 // ======================================================
 
 app.use((err, req, res, next) => {
@@ -1653,7 +1920,7 @@ app.use((err, req, res, next) => {
     );
 
 
-    res.status(500).json({
+    return res.status(500).json({
 
         success: false,
 
@@ -1673,19 +1940,22 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ======================================================
 
-const PORT =
-    process.env.PORT || 8080;
-
-
 app.listen(
     PORT,
     "0.0.0.0",
     () => {
 
+        console.log("");
+        console.log("========================================");
+        console.log("BANKING APPLICATION");
+        console.log("========================================");
         console.log(
             `Server running on port ${PORT}`
         );
+        console.log(
+            `Environment: ${process.env.NODE_ENV || "development"}`
+        );
+        console.log("========================================");
 
     }
 );
-
