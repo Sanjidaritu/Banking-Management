@@ -86,7 +86,7 @@ $("identityForm").addEventListener("submit", async e => {
     try {
 
         const res = await fetch(
-            "verify.php",
+            "/api/verify",
             {
                 method: "POST",
 
@@ -119,7 +119,7 @@ $("identityForm").addEventListener("submit", async e => {
         if (!text.trim()) {
 
             throw new Error(
-                "verify.php returned an empty response."
+"/api/verify returned an empty response."
             );
         }
 
@@ -138,7 +138,7 @@ $("identityForm").addEventListener("submit", async e => {
             );
 
             throw new Error(
-                "verify.php returned invalid JSON."
+"/api/verify returned invalid JSON."
             );
         }
 
