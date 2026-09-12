@@ -1,6 +1,5 @@
 document.getElementById("loginForm").addEventListener("submit", async function (e) {
 
-```
 e.preventDefault();
 
 const error = document.getElementById("error");
@@ -55,6 +54,5 @@ try {
         "Unable to connect to the login server.";
 
 }
-```
 
 });
