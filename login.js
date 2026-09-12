@@ -1,67 +1,81 @@
-document
-    .getElementById("loginForm")
-    .addEventListener("submit", async function (e) {
+document.getElementById("loginForm").addEventListener("submit", async e => {
 
-        e.preventDefault();
+    e.preventDefault();
 
-        const error = document.getElementById("error");
+    const error = document.getElementById("error");
 
-        error.textContent = "";
+    error.textContent = "";
 
-        const username = document
-            .getElementById("username")
-            .value
-            .trim();
+    const username = document
+        .getElementById("username")
+        .value
+        .trim();
 
-        const password = document
-            .getElementById("password")
-            .value;
+    const password = document
+        .getElementById("password")
+        .value;
 
-        if (!username || !password) {
+    if (!username || !password) {
+        error.textContent = "Username and password are required.";
+        return;
+    }
 
-            error.textContent =
-                "Username and password are required.";
+    try {
 
-            return;
-        }
+        const res = await fetch("login.php", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            credentials: "include",
+
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+
+        });
+
+        const text = await res.text();
+
+        let data;
 
         try {
 
-            const response = await fetch("/api/login", {
+            data = JSON.parse(text);
 
-                method: "POST",
+        } catch (jsonError) {
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+            console.error("Invalid JSON from login.php:", text);
 
-                credentials: "include",
-
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-
-                throw new Error(
-                    data.message ||
-                    "Invalid username or password."
-                );
-            }
-
-            // Login successful
-            window.location.href = "/dashboard";
-
-        } catch (error) {
-
-            console.error("Login error:", error);
-
-            document.getElementById("error").textContent =
-                error.message ||
-                "Unable to connect to the banking server.";
+            throw new Error(
+                "The login server returned an invalid response."
+            );
         }
-    });
+
+        if (!res.ok || !data.success) {
+
+            throw new Error(
+                data.message || "Invalid username or password."
+            );
+        }
+
+        /*
+         * Login successful
+         */
+
+        window.location.href = "dashboard.html";
+
+    } catch (err) {
+
+        console.error("Login error:", err);
+
+        error.textContent = err.message ||
+            "Unable to connect to the login service.";
+
+    }
+
+});
