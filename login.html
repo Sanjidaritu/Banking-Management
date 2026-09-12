@@ -1,331 +1,504 @@
+
 <!DOCTYPE html>
 
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Upright Bank Login</title>
 
-<style>
 
-/* =====================================================
-   UPRIGHT BANK LOGIN
-===================================================== */
+    <style>
 
-* {
-    box-sizing: border-box;
-}
+        /* =====================================================
+           GENERAL
+        ===================================================== */
 
+        * {
+            box-sizing: border-box;
+        }
 
-body {
-    margin: 0;
-    padding: 0;
 
-    font-family: Arial, sans-serif;
+        body {
 
-    background: #f3f6fa;
+            margin: 0;
 
-    color: #1f2937;
+            min-height: 100vh;
 
-    min-height: 100vh;
+            font-family: Arial, sans-serif;
 
-    display: flex;
+            background: #f3f6fa;
 
-    justify-content: center;
+            color: #1f2937;
 
-    align-items: center;
-}
+            display: flex;
 
+            justify-content: center;
 
-/* =====================================================
-   LOGIN CONTAINER
-===================================================== */
+            align-items: center;
 
-body > h2,
-body > h3,
-body > form {
-    position: relative;
-}
+        }
 
 
-/* Bank name */
+        /* =====================================================
+           MAIN CONTAINER
+        ===================================================== */
 
-h2 {
-    position: absolute;
+        .login-container {
 
-    top: 35px;
-    left: 50%;
+            width: 100%;
 
-    transform: translateX(-50%);
+            max-width: 420px;
 
-    margin: 0;
+            padding: 20px;
 
-    color: #123c69;
+            text-align: center;
 
-    font-size: 30px;
-}
+        }
 
 
-/* Page title */
+        /* =====================================================
+           BANK NAME
+        ===================================================== */
 
-h3 {
-    position: absolute;
+        .bank-name {
 
-    top: 82px;
-    left: 50%;
+            margin: 0 0 8px 0;
 
-    transform: translateX(-50%);
+            color: #123c69;
 
-    margin: 0;
+            font-size: 32px;
 
-    font-size: 18px;
+            font-weight: bold;
 
-    font-weight: normal;
+        }
 
-    color: #64748b;
-}
 
+        /* =====================================================
+           PAGE TITLE
+        ===================================================== */
 
-/* =====================================================
-   LOGIN FORM
-===================================================== */
+        .page-title {
 
-form {
-    width: 380px;
+            margin: 0 0 25px 0;
 
-    background: white;
+            color: #64748b;
 
-    padding: 35px;
+            font-size: 18px;
 
-    border-radius: 10px;
+            font-weight: normal;
 
-    box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.08);
-}
+        }
 
 
-/* Labels */
+        /* =====================================================
+           LOGIN FORM
+        ===================================================== */
 
-label {
-    display: inline-block;
+        #loginForm {
 
-    margin-bottom: 8px;
+            width: 100%;
 
-    font-size: 14px;
+            background: #ffffff;
 
-    font-weight: bold;
+            padding: 35px;
 
-    color: #334155;
-}
+            border-radius: 10px;
 
+            box-shadow:
+                0 4px 20px rgba(0, 0, 0, 0.08);
 
-/* Inputs */
+            text-align: left;
 
-input {
-    width: 100%;
+        }
 
-    height: 45px;
 
-    padding: 0 12px;
+        /* =====================================================
+           FORM GROUP
+        ===================================================== */
 
-    border: 1px solid #cbd5e1;
+        .form-group {
 
-    border-radius: 6px;
+            margin-bottom: 20px;
 
-    font-size: 15px;
+        }
 
-    outline: none;
 
-    transition: border-color 0.2s;
-}
+        /* =====================================================
+           LABEL
+        ===================================================== */
 
+        label {
 
-input:focus {
-    border-color: #2563eb;
+            display: block;
 
-    box-shadow:
-        0 0 0 2px rgba(37, 99, 235, 0.1);
-}
+            margin-bottom: 8px;
 
+            color: #334155;
 
-/* =====================================================
-   LOGIN BUTTON
-===================================================== */
+            font-size: 14px;
 
-button {
-    width: 100%;
+            font-weight: bold;
 
-    height: 45px;
+        }
 
-    border: none;
 
-    border-radius: 6px;
+        /* =====================================================
+           INPUT
+        ===================================================== */
 
-    background: #123c69;
+        input {
 
-    color: white;
+            width: 100%;
 
-    font-size: 16px;
+            height: 45px;
 
-    font-weight: bold;
+            padding: 0 12px;
 
-    cursor: pointer;
+            border: 1px solid #cbd5e1;
 
-    transition:
-        background 0.2s,
-        transform 0.1s;
-}
+            border-radius: 6px;
 
+            background: #ffffff;
 
-button:hover {
-    background: #0d2f52;
-}
+            color: #1f2937;
 
+            font-size: 15px;
 
-button:active {
-    transform: scale(0.98);
-}
+            outline: none;
 
+            transition: 0.2s;
 
-/* =====================================================
-   ERROR MESSAGE
-===================================================== */
+        }
 
-#error {
-    margin-top: 15px;
 
-    margin-bottom: 0;
+        input:focus {
 
-    font-size: 14px;
+            border-color: #2563eb;
 
-    text-align: center;
-}
+            box-shadow:
+                0 0 0 2px rgba(37, 99, 235, 0.1);
 
+        }
 
-/* =====================================================
-   MOBILE
-===================================================== */
 
-@media (max-width: 500px) {
+        /* =====================================================
+           LOGIN BUTTON
+        ===================================================== */
 
-    h2 {
-        top: 25px;
+        button {
 
-        font-size: 26px;
-    }
+            width: 100%;
 
+            height: 45px;
 
-    h3 {
-        top: 65px;
+            border: none;
 
-        font-size: 16px;
-    }
+            border-radius: 6px;
 
+            background: #123c69;
 
-    form {
-        width: calc(100% - 30px);
+            color: #ffffff;
 
-        padding: 25px;
-    }
+            font-size: 16px;
 
-}
+            font-weight: bold;
 
-</style>
-    </head>
+            cursor: pointer;
+
+            transition:
+                background 0.2s,
+                transform 0.1s;
+
+        }
+
+
+        button:hover {
+
+            background: #0d2f52;
+
+        }
+
+
+        button:active {
+
+            transform: scale(0.98);
+
+        }
+
+
+        /* =====================================================
+           ERROR MESSAGE
+        ===================================================== */
+
+        #error {
+
+            min-height: 18px;
+
+            margin: 15px 0 0 0;
+
+            color: #dc2626;
+
+            font-size: 14px;
+
+            text-align: center;
+
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 500px) {
+
+            body {
+
+                align-items: flex-start;
+
+                padding-top: 50px;
+
+            }
+
+
+            .login-container {
+
+                padding: 15px;
+
+            }
+
+
+            .bank-name {
+
+                font-size: 28px;
+
+            }
+
+
+            .page-title {
+
+                font-size: 16px;
+
+                margin-bottom: 20px;
+
+            }
+
+
+            #loginForm {
+
+                padding: 25px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
 <body>
 
 
-<h2>Upright Bank</h2>
-<h3>Online Banking Login</h3>
+    <div class="login-container">
 
-<form id="loginForm">
 
-    <label for="username">Username</label><br>
-    <input
-        type="text"
-        id="username"
-        name="username"
-        required
-    >
+        <h2 class="bank-name">
+            Upright Bank
+        </h2>
 
-    <br><br>
 
-    <label for="password">Password</label><br>
-    <input
-        type="password"
-        id="password"
-        name="password"
-        required
-    >
+        <h3 class="page-title">
+            Online Banking Login
+        </h3>
 
-    <br><br>
 
-    <button type="submit">Login</button>
+        <form id="loginForm">
 
-    <p id="error" style="color: red;"></p>
 
-</form>
+            <div class="form-group">
 
-<script>
-    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+                <label for="username">
+                    Username
+                </label>
 
-        e.preventDefault();
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    autocomplete="username"
+                    required
+                >
 
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value;
-        const error = document.getElementById("error");
+            </div>
 
-        error.textContent = "";
 
-        if (!username || !password) {
-            error.textContent = "Username and password are required.";
-            return;
-        }
+            <div class="form-group">
 
-        try {
+                <label for="password">
+                    Password
+                </label>
 
-            const response = await fetch("login.php", {
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                >
 
-                method: "POST",
+            </div>
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
 
-                credentials: "include",
+            <button type="submit">
+                Login
+            </button>
 
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
 
-            });
+            <p id="error"></p>
 
-            const data = await response.json();
 
-            if (!response.ok || !data.success) {
+        </form>
 
-                error.textContent =
-                    data.message || "Invalid username or password.";
 
-                return;
-            }
+    </div>
 
-            // Login successful
-            window.location.href = "dashboard.html";
 
-        } catch (err) {
+    <script>
 
-            console.error(err);
 
-            error.textContent =
-                "Unable to connect to the login server.";
+        /* =====================================================
+           LOGIN
+        ===================================================== */
 
-        }
+        document
+            .getElementById("loginForm")
+            .addEventListener(
+                "submit",
+                async function(e) {
 
-    });
-</script>
+                    e.preventDefault();
+
+
+                    const username =
+                        document
+                            .getElementById("username")
+                            .value
+                            .trim();
+
+
+                    const password =
+                        document
+                            .getElementById("password")
+                            .value;
+
+
+                    const error =
+                        document
+                            .getElementById("error");
+
+
+                    error.textContent = "";
+
+
+                    /* Validate fields */
+
+                    if (!username || !password) {
+
+                        error.textContent =
+                            "Username and password are required.";
+
+                        return;
+
+                    }
+
+
+                    try {
+
+
+                        /* Send login request to PHP */
+
+                        const response =
+                            await fetch(
+                                "login.php",
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    credentials: "include",
+
+                                    body:
+                                        JSON.stringify({
+
+                                            username:
+                                                username,
+
+                                            password:
+                                                password
+
+                                        })
+
+                                }
+                            );
+
+
+                        /* Read response */
+
+                        const data =
+                            await response.json();
+
+
+                        /* Login failed */
+
+                        if (
+                            !response.ok ||
+                            !data.success
+                        ) {
+
+                            error.textContent =
+                                data.message ||
+                                "Invalid username or password.";
+
+                            return;
+
+                        }
+
+
+                        /* Login successful */
+
+                        window.location.href =
+                            "dashboard.html";
+
+
+                    } catch (err) {
+
+                        console.error(
+                            "Login error:",
+                            err
+                        );
+
+
+                        error.textContent =
+                            "Unable to connect to the login server.";
+
+                    }
+
+                }
+            );
+
+    </script>
 
 
 </body>
+
 </html>
+
