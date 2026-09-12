@@ -1,60 +1,455 @@
-<!doctype html>
+<!DOCTYPE html>
 
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+```
+<title>Online Banking Login</title>
 
-<title>Online Banking Dashboard</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f7fb;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 430px;
+        padding: 20px;
+    }
+
+    .login-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .logo {
+        text-align: center;
+        margin-bottom: 10px;
+        color: #123b6d;
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    input {
+        width: 100%;
+        padding: 13px 14px;
+        border: 1px solid #ccd4df;
+        border-radius: 7px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    input:focus {
+        border-color: #1769aa;
+        box-shadow: 0 0 0 3px rgba(23, 105, 170, 0.1);
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper input {
+        padding-right: 75px;
+    }
+
+    .show-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: #1769aa;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .login-button {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 7px;
+        background: #123b6d;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 5px;
+    }
+
+    .login-button:hover {
+        background: #0d2d52;
+    }
+
+    .login-button:disabled {
+        background: #9aa8b7;
+        cursor: not-allowed;
+    }
+
+    .error {
+        min-height: 20px;
+        margin-bottom: 15px;
+        color: #c62828;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .success {
+        color: #16803c;
+    }
+
+    .links {
+        text-align: center;
+        margin-top: 25px;
+    }
+
+    .links a {
+        color: #1769aa;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .links a:hover {
+        text-decoration: underline;
+    }
+
+    .divider {
+        margin: 20px 0;
+        border-top: 1px solid #e1e5ea;
+    }
+
+    .enroll-text {
+        text-align: center;
+        color: #555;
+        font-size: 14px;
+    }
+
+    .enroll-button {
+        display: block;
+        margin-top: 10px;
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #123b6d;
+        border-radius: 7px;
+        color: #123b6d;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .enroll-button:hover {
+        background: #f0f5fa;
+    }
+
+    .loading {
+        display: none;
+        text-align: center;
+        margin-top: 12px;
+        color: #666;
+        font-size: 14px;
+    }
+</style>
+```
 
 </head>
 
 <body>
 
+<div class="login-container">
 
-<h1>Online Banking Dashboard</h1>
+```
+<div class="login-card">
 
-<p>You are logged in.</p>
+    <div class="logo">
+        Horizon Bank
+    </div>
 
-<button id="logout" type="button">Logout</button>
+    <div class="subtitle">
+        Online Banking
+    </div>
+
+    <form id="loginForm">
+
+        <div class="form-group">
+            <label for="username">
+                Username
+            </label>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                autocomplete="username"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="password">
+                Password
+            </label>
+
+            <div class="password-wrapper">
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button
+                    type="button"
+                    class="show-password"
+                    id="showPassword"
+                >
+                    Show
+                </button>
+
+            </div>
+        </div>
+
+        <div
+            id="error"
+            class="error"
+            role="alert"
+            aria-live="polite"
+        ></div>
+
+        <button
+            type="submit"
+            class="login-button"
+            id="loginButton"
+        >
+            Sign In
+        </button>
+
+        <div
+            id="loading"
+            class="loading"
+        >
+            Signing you in...
+        </div>
+
+    </form>
+
+    <div class="links">
+        <a href="#">Forgot username or password?</a>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="enroll-text">
+        Don't have online banking access?
+    </div>
+
+    <a
+        href="register.html"
+        class="enroll-button"
+    >
+        Enroll in Online Banking
+    </a>
+
+</div>
+```
+
+</div>
 
 <script>
-    document.getElementById("logout").addEventListener("click", async () => {
 
-        try {
+const loginForm = document.getElementById("loginForm");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const errorMessage = document.getElementById("error");
+const loginButton = document.getElementById("loginButton");
+const loadingMessage = document.getElementById("loading");
+const showPasswordButton = document.getElementById("showPassword");
 
-            const response = await fetch("/api/logout", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
 
-            const data = await response.json();
+/* =========================================================
+   SHOW / HIDE PASSWORD
+========================================================= */
 
-            if (response.ok && data.success) {
+showPasswordButton.addEventListener("click", () => {
 
-                // Logout successful
-                window.location.href = "/login.html";
+    if (passwordInput.type === "password") {
 
-            } else {
+        passwordInput.type = "text";
+        showPasswordButton.textContent = "Hide";
 
-                alert(data.message || "Logout failed.");
+    } else {
 
-            }
+        passwordInput.type = "password";
+        showPasswordButton.textContent = "Show";
 
-        } catch (error) {
+    }
 
-            console.error("Logout error:", error);
+});
 
-            alert("Unable to connect to the server.");
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+loginForm.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    errorMessage.textContent = "";
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+
+    /* -----------------------------------------------------
+       CLIENT-SIDE VALIDATION
+    ----------------------------------------------------- */
+
+    if (!username) {
+
+        errorMessage.textContent =
+            "Please enter your username.";
+
+        usernameInput.focus();
+
+        return;
+    }
+
+    if (!password) {
+
+        errorMessage.textContent =
+            "Please enter your password.";
+
+        passwordInput.focus();
+
+        return;
+    }
+
+
+    /* -----------------------------------------------------
+       DISABLE BUTTON WHILE LOGIN IS PROCESSING
+    ----------------------------------------------------- */
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Signing In...";
+    loadingMessage.style.display = "block";
+
+
+    try {
+
+        const response = await fetch("/api/login", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            credentials: "include",
+
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+
+        });
+
+
+        /* -------------------------------------------------
+           READ SERVER RESPONSE
+        ------------------------------------------------- */
+
+        const data = await response.json();
+
+
+        /* -------------------------------------------------
+           LOGIN FAILED
+        ------------------------------------------------- */
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.message ||
+                "Invalid username or password."
+            );
+
         }
-    });
-</script>
 
+
+        /* -------------------------------------------------
+           LOGIN SUCCESSFUL
+        ------------------------------------------------- */
+
+        errorMessage.classList.add("success");
+        errorMessage.textContent =
+            "Login successful. Redirecting...";
+
+
+        /*
+         * IMPORTANT:
+         * Go to dashboard after successful login.
+         */
+
+        window.location.href = "/dashboard.html";
+
+
+    } catch (error) {
+
+        console.error("Login error:", error);
+
+        errorMessage.classList.remove("success");
+
+        errorMessage.textContent =
+            error.message ||
+            "Unable to connect to the server.";
+
+    } finally {
+
+        loginButton.disabled = false;
+        loginButton.textContent = "Sign In";
+        loadingMessage.style.display = "none";
+
+    }
+
+});
+
+</script>
 
 </body>
 </html>
