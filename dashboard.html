@@ -1,46 +1,56 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Banking Dashboard</title>
+
+
+<title>Online Banking Dashboard</title>
+
+
 </head>
 
 <body>
 
-    <h1>Online Banking Dashboard</h1>
 
-    <p>You are logged in.</p>
+<h1>Horizon Bank</h1>
 
-    <button id="logout">Logout</button>
+<h2>Online Banking Dashboard</h2>
 
-    <script>
-        document.getElementById("logout").addEventListener("click", async () => {
+<p>You are logged in.</p>
+
+<button id="logoutButton">
+    Logout
+</button>
+
+<script>
+
+    document
+        .getElementById("logoutButton")
+        .addEventListener("click", async function () {
 
             try {
 
-                const response = await fetch("/api/logout", {
+                await fetch("logout.php", {
                     method: "POST",
                     credentials: "include"
                 });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    window.location.href = "/login.html";
-                } else {
-                    alert(data.message || "Logout failed.");
-                }
 
             } catch (error) {
 
                 console.error("Logout error:", error);
 
-                alert("Unable to logout. Please try again.");
             }
 
+            // Always return to login page
+            window.location.href = "login.html";
+
         });
-    </script>
+
+</script>
 
 </body>
+
 </html>
