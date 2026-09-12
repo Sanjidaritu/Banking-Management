@@ -1,56 +1,50 @@
+```html
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-<title>Online Banking Dashboard</title>
-
-
+    <title>Upright Bank Dashboard</title>
 </head>
 
 <body>
 
+    <h1>Upright Bank</h1>
 
-<h1>Upright Bank</h1>
+    <h2>Online Banking Dashboard</h2>
 
-<h2>Online Banking Dashboard</h2>
+    <p id="welcomeMessage">
+        Loading...
+    </p>
 
-<p>You are logged in.</p>
+    <hr>
 
-<button id="logoutButton">
-    Logout
-</button>
+    <h3>My Account</h3>
 
-<script>
+    <div id="accountInfo">
 
-    document
-        .getElementById("logoutButton")
-        .addEventListener("click", async function () {
+        Loading account information...
 
-            try {
+    </div>
 
-                await fetch("logout.php", {
-                    method: "POST",
-                    credentials: "include"
-                });
+    <p id="errorMessage"
+       style="color:red;">
+    </p>
 
-            } catch (error) {
+    <br>
 
-                console.error("Logout error:", error);
+    <button id="logoutButton">
+        Logout
+    </button>
 
-            }
 
-            // Always return to login page
-            window.location.href = "login.html";
-
-        });
-
-</script>
+    <script src="dashboard.js"></script>
 
 </body>
 
 </html>
+```
