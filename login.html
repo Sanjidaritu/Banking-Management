@@ -1,5 +1,60 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Dashboard</title></head>
-<body><h1>Online Banking Dashboard</h1><p>You are logged in.</p><button id="logout">Logout</button>
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+```
+<title>Online Banking Dashboard</title>
+```
+
+</head>
+
+<body>
+
+```
+<h1>Online Banking Dashboard</h1>
+
+<p>You are logged in.</p>
+
+<button id="logout" type="button">Logout</button>
+
 <script>
-document.getElementById("logout").onclick=async()=>{await fetch("api/auth/logout.php",{method:"POST"});location.href="login.html";}
-</script></body></html>
+    document.getElementById("logout").addEventListener("click", async () => {
+
+        try {
+
+            const response = await fetch("/api/logout", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+
+                // Logout successful
+                window.location.href = "/login.html";
+
+            } else {
+
+                alert(data.message || "Logout failed.");
+
+            }
+
+        } catch (error) {
+
+            console.error("Logout error:", error);
+
+            alert("Unable to connect to the server.");
+        }
+    });
+</script>
+```
+
+</body>
+</html>
