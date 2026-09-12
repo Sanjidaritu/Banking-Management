@@ -9,9 +9,9 @@ const pool = require("./database");
 const app = express();
 
 
-/* =====================================================
-   MIDDLEWARE
-===================================================== */
+// ======================================================
+// MIDDLEWARE
+// ======================================================
 
 app.use(cors({
     origin: true,
@@ -25,9 +25,9 @@ app.use(express.urlencoded({
 }));
 
 
-/*
- * Session
- */
+// ======================================================
+// SESSION
+// ======================================================
 
 app.use(session({
 
@@ -40,46 +40,30 @@ app.use(session({
     saveUninitialized: false,
 
     cookie: {
-        secure: false,
         httpOnly: true,
+        secure: false,
         sameSite: "lax"
     }
 
 }));
 
 
-/*
- * Serve HTML / JS / CSS files
- */
-
-app.use(
-    express.static(
-        path.join(__dirname)
-    )
-);
-
-
-/* =====================================================
-   DASHBOARD API
-===================================================== */
+// ======================================================
+// DASHBOARD API
+// ======================================================
 
 app.get("/api/dashboard", async (req, res) => {
 
+    console.log("Dashboard API called");
+
     try {
 
-        /*
-         * Check login
-         */
-
+        // Check login session
         if (!req.session.user_id) {
 
             return res.status(401).json({
-
                 success: false,
-
-                message:
-                    "You are not logged in."
-
+                message: "You are not logged in."
             });
 
         }
@@ -89,20 +73,19 @@ app.get("/api/dashboard", async (req, res) => {
             req.session.customer_id;
 
 
-        /*
-         * Find customer's active account
-         */
+        console.log(
+            "Customer ID:",
+            customerId
+        );
 
+
+        // Get customer's account
         const [rows] = await pool.execute(`
 
             SELECT
-
                 account_number,
-
                 account_type,
-
                 current_balance,
-
                 available_balance
 
             FROM accounts
@@ -113,33 +96,20 @@ app.get("/api/dashboard", async (req, res) => {
 
             LIMIT 1
 
-        `, [
-            customerId
-        ]);
+        `, [customerId]);
 
-
-        /*
-         * Account not found
-         */
 
         if (rows.length === 0) {
 
             return res.status(404).json({
-
                 success: false,
-
-                message:
-                    "No active bank account found."
-
+                message: "No active bank account found."
             });
 
         }
 
 
-        /*
-         * Send account information
-         */
-
+        // Return JSON
         res.json({
 
             success: true,
@@ -155,7 +125,7 @@ app.get("/api/dashboard", async (req, res) => {
     } catch (error) {
 
         console.error(
-            "Dashboard database error:",
+            "Dashboard error:",
             error
         );
 
@@ -164,7 +134,7 @@ app.get("/api/dashboard", async (req, res) => {
             success: false,
 
             message:
-                "Unable to load account information."
+                "Database error while loading dashboard."
 
         });
 
@@ -173,9 +143,9 @@ app.get("/api/dashboard", async (req, res) => {
 });
 
 
-/* =====================================================
-   LOGOUT API
-===================================================== */
+// ======================================================
+// LOGOUT
+// ======================================================
 
 app.post("/api/logout", (req, res) => {
 
@@ -192,8 +162,7 @@ app.post("/api/logout", (req, res) => {
 
                 success: false,
 
-                message:
-                    "Logout failed."
+                message: "Logout failed."
 
             });
 
@@ -204,8 +173,7 @@ app.post("/api/logout", (req, res) => {
 
             success: true,
 
-            message:
-                "Logged out successfully."
+            message: "Logged out successfully."
 
         });
 
@@ -214,9 +182,20 @@ app.post("/api/logout", (req, res) => {
 });
 
 
-/* =====================================================
-   START SERVER
-===================================================== */
+// ======================================================
+// SERVE HTML / JS / CSS
+// ======================================================
+
+app.use(
+    express.static(
+        path.join(__dirname)
+    )
+);
+
+
+// ======================================================
+// START SERVER
+// ======================================================
 
 const PORT =
     process.env.PORT || 3000;
@@ -225,7 +204,7 @@ const PORT =
 app.listen(PORT, () => {
 
     console.log(
-        `Upright Bank server running on port ${PORT}`
+        `Upright Bank running on port ${PORT}`
     );
 
 });
