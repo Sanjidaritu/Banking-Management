@@ -1,251 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Online Banking Dashboard</title>
-
-    <link
-        rel="stylesheet"
-        href="dashboard.css"
-    >
-    <style>
-
-    * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f7fb;
-    color: #172033;
-}
-
-.topbar {
-    height: 70px;
-    background: #062b5c;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 0 40px;
-
-    color: white;
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: 700;
-}
-
-.logout-button {
-    border: 1px solid white;
-    background: transparent;
-    color: white;
-
-    padding: 10px 20px;
-
-    border-radius: 6px;
-
-    cursor: pointer;
-}
-
-.dashboard-container {
-    max-width: 1100px;
-    margin: 0 auto;
-
-    padding: 40px 20px;
-}
-
-.welcome-section {
-    margin-bottom: 35px;
-}
-
-.welcome-section h1 {
-    font-size: 32px;
-    margin-bottom: 8px;
-}
-
-.welcome-section p {
-    color: #667085;
-    font-size: 16px;
-}
-
-.accounts-section h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-
-.accounts-container {
-    display: grid;
-
-    grid-template-columns:
-        repeat(auto-fit, minmax(320px, 1fr));
-
-    gap: 20px;
-}
-
-.account-card {
-    background: white;
-
-    border-radius: 12px;
-
-    padding: 25px;
-
-    box-shadow:
-        0 3px 12px rgba(0, 0, 0, 0.08);
-
-    border: 1px solid #e5e7eb;
-}
-
-.account-type {
-    font-size: 18px;
-    font-weight: 700;
-
-    margin-bottom: 8px;
-}
-
-.account-number {
-    color: #667085;
-
-    font-size: 16px;
-
-    margin-bottom: 25px;
-}
-
-.balance-row {
-    display: flex;
-
-    justify-content: space-between;
-
-    padding: 12px 0;
-
-    border-top: 1px solid #eeeeee;
-}
-
-.balance-label {
-    color: #667085;
-}
-
-.balance-value {
-    font-weight: 700;
-}
-
-.loading {
-    padding: 20px 0;
-
-    color: #667085;
-}
-
-.error-message {
-    background: #fff1f0;
-
-    color: #b42318;
-
-    border: 1px solid #fecdca;
-
-    padding: 15px;
-
-    border-radius: 8px;
-
-    margin-bottom: 20px;
-}
-
-.no-accounts {
-    background: white;
-
-    padding: 30px;
-
-    border-radius: 10px;
-
-    color: #667085;
-
-    text-align: center;
-}
-    </style>
 </head>
 
 <body>
 
-    <header class="topbar">
+    <h1>Online Banking Dashboard</h1>
 
-        <div class="logo">
-            Horizon Bank
-        </div>
+    <p>You are logged in.</p>
 
-        <button
-            id="logoutButton"
-            class="logout-button"
-        >
-            Logout
-        </button>
+    <button id="logout">Logout</button>
 
-    </header>
+    <script>
+        document.getElementById("logout").addEventListener("click", async () => {
 
+            try {
 
-    <main class="dashboard-container">
+                const response = await fetch("/api/logout", {
+                    method: "POST",
+                    credentials: "include"
+                });
 
-        <section class="welcome-section">
+                const data = await response.json();
 
-            <h1 id="welcomeMessage">
-                Welcome
-            </h1>
+                if (response.ok && data.success) {
+                    window.location.href = "/login.html";
+                } else {
+                    alert(data.message || "Logout failed.");
+                }
 
-            <p>
-                Here's a summary of your accounts.
-            </p>
+            } catch (error) {
 
-        </section>
+                console.error("Logout error:", error);
 
+                alert("Unable to logout. Please try again.");
+            }
 
-        <section class="accounts-section">
-
-            <div class="section-header">
-
-                <h2>
-                    Your Accounts
-                </h2>
-
-            </div>
-
-
-            <div
-                id="loading"
-                class="loading"
-            >
-                Loading your accounts...
-            </div>
-
-
-            <div
-                id="errorMessage"
-                class="error-message"
-                hidden
-            >
-            </div>
-
-
-            <div
-                id="accountsContainer"
-                class="accounts-container"
-            >
-            </div>
-
-        </section>
-
-    </main>
-
-    <script src="dashboard.js"></script>
+        });
+    </script>
 
 </body>
-
 </html>
