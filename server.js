@@ -28,15 +28,24 @@ app.use(express.urlencoded({ extended: true }));
 // ======================================================
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || "upright-bank-secret-change-this",
+    secret:
+        process.env.SESSION_SECRET ||
+        "upright-bank-secret-change-this",
+
     resave: false,
+
     saveUninitialized: false,
 
     cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+
+        secure:
+            process.env.NODE_ENV === "production",
+
         sameSite: "lax",
-        maxAge: 60 * 60 * 1000
+
+        maxAge:
+            60 * 60 * 1000
     }
 }));
 
@@ -47,10 +56,10 @@ app.use(session({
 
 app.get("/api/health", (req, res) => {
 
-    res.json({
+    return res.json({
         success: true,
         message: "Upright Bank API is running.",
-        version: "2026-09-14-VERIFY-PHP"
+        version: "2026-09-14"
     });
 
 });
@@ -70,10 +79,6 @@ app.post("/verify.php", async (req, res) => {
 
     try {
 
-        // --------------------------------------------------
-        // Make sure JSON body exists
-        // --------------------------------------------------
-
         if (!req.body || typeof req.body !== "object") {
 
             return res.status(400).json({
@@ -84,32 +89,39 @@ app.post("/verify.php", async (req, res) => {
         }
 
 
-        // --------------------------------------------------
-        // Read submitted values
-        // --------------------------------------------------
-
         const accountNumber =
-            String(req.body.account_number || "").trim();
+            String(
+                req.body.account_number || ""
+            ).trim();
 
         const ssnLast4 =
-            String(req.body.ssn_last4 || "").trim();
+            String(
+                req.body.ssn_last4 || ""
+            ).trim();
 
         const dateOfBirth =
-            String(req.body.date_of_birth || "").trim();
+            String(
+                req.body.date_of_birth || ""
+            ).trim();
 
         const enrollmentReference =
-            String(req.body.enrollment_reference || "").trim();
+            String(
+                req.body.enrollment_reference || ""
+            ).trim();
 
 
         console.log("Account:", accountNumber);
         console.log("SSN Last 4:", ssnLast4);
         console.log("DOB:", dateOfBirth);
-        console.log("Enrollment Reference:", enrollmentReference);
+        console.log(
+            "Enrollment Reference:",
+            enrollmentReference
+        );
 
 
-        // --------------------------------------------------
-        // Basic validation
-        // --------------------------------------------------
+        // ==================================================
+        // BASIC VALIDATION
+        // ==================================================
 
         if (
             !accountNumber ||
@@ -120,36 +132,35 @@ app.post("/verify.php", async (req, res) => {
 
             return res.status(400).json({
                 success: false,
-                message: "All verification fields are required."
+                message:
+                    "All verification fields are required."
             });
 
         }
 
-
-        // SSN must be exactly 4 digits
 
         if (!/^\d{4}$/.test(ssnLast4)) {
 
             return res.status(400).json({
                 success: false,
-                message: "SSN last 4 digits must contain exactly 4 digits."
+                message:
+                    "SSN last 4 digits must contain exactly 4 digits."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Find customer
-        // --------------------------------------------------
+        // ==================================================
+        // FIND CUSTOMER
+        // ==================================================
 
         const [rows] = await pool.query(
-            
-            SELECT
-                *
+            `
+            SELECT *
             FROM customers
             WHERE account_number = ?
             LIMIT 1
-            ,
+            `,
             [accountNumber]
         );
 
@@ -158,7 +169,8 @@ app.post("/verify.php", async (req, res) => {
 
             return res.status(401).json({
                 success: false,
-                message: "Customer account was not found."
+                message:
+                    "Customer account was not found."
             });
 
         }
@@ -167,12 +179,15 @@ app.post("/verify.php", async (req, res) => {
         const customer = rows[0];
 
 
-        console.log("CUSTOMER FOUND:", customer);
+        console.log(
+            "CUSTOMER FOUND:",
+            customer
+        );
 
 
-        // --------------------------------------------------
-        // Check active status
-        // --------------------------------------------------
+        // ==================================================
+        // CHECK ACTIVE
+        // ==================================================
 
         if (
             customer.active !== undefined &&
@@ -181,33 +196,37 @@ app.post("/verify.php", async (req, res) => {
 
             return res.status(403).json({
                 success: false,
-                message: "This account is not active."
+                message:
+                    "This account is not active."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Check account_status if column exists
-        // --------------------------------------------------
+        // ==================================================
+        // CHECK ACCOUNT STATUS
+        // ==================================================
 
         if (
             customer.account_status !== undefined &&
             customer.account_status !== null &&
-            String(customer.account_status).toLowerCase() !== "active"
+            String(
+                customer.account_status
+            ).toLowerCase() !== "active"
         ) {
 
             return res.status(403).json({
                 success: false,
-                message: "This account is not active."
+                message:
+                    "This account is not active."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Check whether already enrolled
-        // --------------------------------------------------
+        // ==================================================
+        // CHECK ONLINE ENROLLMENT
+        // ==================================================
 
         if (
             customer.online_enrolled !== undefined &&
@@ -216,47 +235,52 @@ app.post("/verify.php", async (req, res) => {
 
             return res.status(409).json({
                 success: false,
-                message: "This customer is already enrolled in online banking."
+                message:
+                    "This customer is already enrolled in online banking."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Check SSN last 4
-        // --------------------------------------------------
+        // ==================================================
+        // CHECK SSN
+        // ==================================================
 
         const databaseSSN =
-            String(customer.ssn_last4 || "").trim();
+            String(
+                customer.ssn_last4 || ""
+            ).trim();
 
 
         if (databaseSSN !== ssnLast4) {
 
             return res.status(401).json({
                 success: false,
-                message: "The SSN information does not match our records."
+                message:
+                    "The SSN information does not match our records."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Normalize DOB
-        // Supports:
-        //
-        // 7/3/1991
-        // 07/03/1991
-        // 1991-07-03
-        // --------------------------------------------------
+        // ==================================================
+        // NORMALIZE DOB
+        // ==================================================
 
         function normalizeDate(value) {
 
-            const input = String(value || "").trim();
+            const input =
+                String(value || "").trim();
+
 
             // YYYY-MM-DD
-            if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(input)) {
 
-                const parts = input.split("-");
+            if (
+                /^\d{4}-\d{1,2}-\d{1,2}$/.test(input)
+            ) {
+
+                const parts =
+                    input.split("-");
 
                 return [
                     parts[0],
@@ -268,29 +292,47 @@ app.post("/verify.php", async (req, res) => {
 
 
             // MM/DD/YYYY
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(input)) {
 
-                const parts = input.split("/");
+            if (
+                /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(input)
+            ) {
 
-                const month = String(parts[0]).padStart(2, "0");
-                const day = String(parts[1]).padStart(2, "0");
-                const year = parts[2];
+                const parts =
+                    input.split("/");
 
-                return ${year}-${month}-${day};
+                const month =
+                    String(parts[0]).padStart(2, "0");
+
+                const day =
+                    String(parts[1]).padStart(2, "0");
+
+                const year =
+                    parts[2];
+
+                return `${year}-${month}-${day}`;
 
             }
 
 
-            // DD/MM/YYYY
-            if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(input)) {
+            // DD-MM-YYYY
 
-                const parts = input.split("-");
+            if (
+                /^\d{1,2}-\d{1,2}-\d{4}$/.test(input)
+            ) {
 
-                const day = String(parts[0]).padStart(2, "0");
-                const month = String(parts[1]).padStart(2, "0");
-                const year = parts[2];
+                const parts =
+                    input.split("-");
 
-                return ${year}-${month}-${day};
+                const day =
+                    String(parts[0]).padStart(2, "0");
+
+                const month =
+                    String(parts[1]).padStart(2, "0");
+
+                const year =
+                    parts[2];
+
+                return `${year}-${month}-${day}`;
 
             }
 
@@ -304,22 +346,27 @@ app.post("/verify.php", async (req, res) => {
             normalizeDate(dateOfBirth);
 
 
-        // --------------------------------------------------
-        // Get database DOB safely
-        // --------------------------------------------------
+        // ==================================================
+        // DATABASE DOB
+        // ==================================================
 
-        let databaseDOB = customer.date_of_birth;
+        let databaseDOB =
+            customer.date_of_birth;
 
 
         if (databaseDOB instanceof Date) {
 
             databaseDOB =
-                databaseDOB.toISOString().substring(0, 10);
+                databaseDOB
+                    .toISOString()
+                    .substring(0, 10);
 
         } else {
 
             databaseDOB =
-                String(databaseDOB || "").substring(0, 10);
+                String(
+                    databaseDOB || ""
+                ).substring(0, 10);
 
         }
 
@@ -328,37 +375,51 @@ app.post("/verify.php", async (req, res) => {
             normalizeDate(databaseDOB);
 
 
-        console.log("Submitted DOB:", submittedDOB);
-        console.log("Database DOB:", databaseDOB);
+        console.log(
+            "Submitted DOB:",
+            submittedDOB
+        );
+
+        console.log(
+            "Database DOB:",
+            databaseDOB
+        );
 
 
-        // --------------------------------------------------
-        // Compare DOB
-        // --------------------------------------------------
+        // ==================================================
+        // COMPARE DOB
+        // ==================================================
 
-        if (submittedDOB !== databaseDOB) {
+        if (
+            submittedDOB !== databaseDOB
+        ) {
 
             return res.status(401).json({
                 success: false,
-                message: "The date of birth does not match our records."
+                message:
+                    "The date of birth does not match our records."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Check enrollment reference
-        // --------------------------------------------------
+        // ==================================================
+        // ENROLLMENT REFERENCE
+        // ==================================================
 
         const storedReferenceHash =
-            String(customer.enrollment_reference_hash || "").trim();
+            String(
+                customer.enrollment_reference_hash ||
+                ""
+            ).trim();
 
 
         if (!storedReferenceHash) {
 
             return res.status(500).json({
                 success: false,
-                message: "Enrollment reference is not configured for this account."
+                message:
+                    "Enrollment reference is not configured for this account."
             });
 
         }
@@ -368,13 +429,15 @@ app.post("/verify.php", async (req, res) => {
             storedReferenceHash;
 
 
-        // MySQL/PHP bcrypt hashes may start with $2y$
-        // Node bcrypt expects $2b$
+        // PHP bcrypt compatibility
 
-        if (referenceHash.startsWith("$2y$")) {
+        if (
+            referenceHash.startsWith("$2y$")
+        ) {
 
             referenceHash =
-                "$2b$" + referenceHash.substring(4);
+                "$2b$" +
+                referenceHash.substring(4);
 
         }
 
@@ -390,23 +453,26 @@ app.post("/verify.php", async (req, res) => {
 
             return res.status(401).json({
                 success: false,
-                message: "The enrollment reference does not match our records."
+                message:
+                    "The enrollment reference does not match our records."
             });
 
         }
 
 
-        // --------------------------------------------------
-        // Generate enrollment token
-        // --------------------------------------------------
+        // ==================================================
+        // GENERATE ENROLLMENT TOKEN
+        // ==================================================
 
         const enrollmentToken =
-            crypto.randomBytes(32).toString("hex");
+            crypto
+                .randomBytes(32)
+                .toString("hex");
 
 
-        // --------------------------------------------------
-        // Store enrollment information in session
-        // --------------------------------------------------
+        // ==================================================
+        // STORE ENROLLMENT SESSION
+        // ==================================================
 
         req.session.enrollment = {
 
@@ -427,11 +493,10 @@ app.post("/verify.php", async (req, res) => {
         };
 
 
-        // --------------------------------------------------
-        // Return SUCCESS
-        // --------------------------------------------------
+        console.log(
+            "IDENTITY VERIFIED SUCCESSFULLY"
+        );
 
-        console.log("IDENTITY VERIFIED SUCCESSFULLY");
 
         return res.status(200).json({
 
@@ -447,8 +512,10 @@ app.post("/verify.php", async (req, res) => {
 
     } catch (error) {
 
-        console.error("VERIFY ERROR:");
-        console.error(error);
+        console.error(
+            "VERIFY ERROR:",
+            error
+        );
 
         return res.status(500).json({
 
@@ -468,861 +535,968 @@ app.post("/verify.php", async (req, res) => {
 // CHECK USERNAME
 // ======================================================
 
-app.post("/api/check-username", async (req, res) => {
+app.post(
+    "/api/check-username",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const username =
-            String(req.body.username || "").trim();
-
-
-        if (!username) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Username is required."
-            });
-
-        }
+            const username =
+                String(
+                    req.body.username || ""
+                ).trim();
 
 
-        const [rows] = await pool.query(
-            
-            SELECT customer_id
-            FROM online_users
-            WHERE username = ?
-            LIMIT 1
-            ,
-            [username]
-        );
+            if (!username) {
+
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Username is required."
+                });
+
+            }
 
 
-        if (rows.length > 0) {
+            const [rows] =
+                await pool.query(
+                    `
+                    SELECT customer_id
+                    FROM online_users
+                    WHERE username = ?
+                    LIMIT 1
+                    `,
+                    [username]
+                );
+
+
+            if (rows.length > 0) {
+
+                return res.json({
+
+                    success: true,
+
+                    available: false,
+
+                    message:
+                        "Username is already taken."
+
+                });
+
+            }
+
 
             return res.json({
 
                 success: true,
-                available: false,
-                message: "Username is already taken."
+
+                available: true,
+
+                message:
+                    "Username is available."
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "USERNAME CHECK ERROR:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Unable to check username."
 
             });
 
         }
 
-
-        return res.json({
-
-            success: true,
-            available: true,
-            message: "Username is available."
-
-        });
-
-    } catch (error) {
-
-        console.error("USERNAME CHECK ERROR:", error);
-
-        return res.status(500).json({
-
-            success: false,
-            message: "Unable to check username."
-
-        });
-
     }
-
-});
+);
 
 
 // ======================================================
 // CREATE ONLINE BANKING USER
 // ======================================================
 
-app.post("/api/create", async (req, res) => {
+app.post(
+    "/api/create",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const username =
-            String(req.body.username || "").trim();
+            const username =
+                String(
+                    req.body.username || ""
+                ).trim();
 
-        const password =
-            String(req.body.password || "");
+            const password =
+                String(
+                    req.body.password || ""
+                );
 
-        const enrollmentToken =
-            String(req.body.enrollment_token || "").trim();
-
-
-        // --------------------------------------------------
-        // Validate request
-        // --------------------------------------------------
-
-        if (
-            !username ||
-            !password ||
-            !enrollmentToken
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-                message: "Username, password and enrollment token are required."
-
-            });
-
-        }
+            const enrollmentToken =
+                String(
+                    req.body.enrollment_token || ""
+                ).trim();
 
 
-        // --------------------------------------------------
-        // Validate enrollment session
-        // --------------------------------------------------
+            // ==================================================
+            // VALIDATE REQUEST
+            // ==================================================
 
-        if (
-            !req.session.enrollment ||
-            req.session.enrollment.token !== enrollmentToken
-        ) {
+            if (
+                !username ||
+                !password ||
+                !enrollmentToken
+            ) {
 
-            return res.status(401).json({
+                return res.status(400).json({
 
-                success: false,
-                message: "Invalid or expired enrollment session."
+                    success: false,
 
-            });
+                    message:
+                        "Username, password and enrollment token are required."
 
-        }
+                });
 
-
-        // --------------------------------------------------
-        // Check token expiration
-        // 15 minutes
-        // --------------------------------------------------
-
-        const age =
-            Date.now() -
-            Number(req.session.enrollment.verifiedAt);
+            }
 
 
-        if (age > 15 * 60 * 1000) {
+            // ==================================================
+            // VALIDATE ENROLLMENT SESSION
+            // ==================================================
+
+            if (
+                !req.session.enrollment ||
+                req.session.enrollment.token !==
+                    enrollmentToken
+            ) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid or expired enrollment session."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // TOKEN EXPIRATION
+            // ==================================================
+
+            const age =
+                Date.now() -
+                Number(
+                    req.session.enrollment.verifiedAt
+                );
+
+
+            if (
+                age > 15 * 60 * 1000
+            ) {
+
+                delete req.session.enrollment;
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Enrollment session has expired. Please verify your identity again."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // VALIDATE USERNAME
+            // ==================================================
+
+            if (
+                !/^[A-Za-z0-9_]{6,20}$/.test(
+                    username
+                )
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Username must contain 6-20 letters, numbers or underscores."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // VALIDATE PASSWORD
+            // ==================================================
+
+            if (password.length < 8) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Password must be at least 8 characters."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // CHECK USERNAME
+            // ==================================================
+
+            const [existingUsers] =
+                await pool.query(
+                    `
+                    SELECT customer_id
+                    FROM online_users
+                    WHERE username = ?
+                    LIMIT 1
+                    `,
+                    [username]
+                );
+
+
+            if (
+                existingUsers.length > 0
+            ) {
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    message:
+                        "Username is already taken."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // GET CUSTOMER
+            // ==================================================
+
+            const customerId =
+                req.session.enrollment.customerId;
+
+            const accountNumber =
+                req.session.enrollment.accountNumber;
+
+
+            const [customers] =
+                await pool.query(
+                    `
+                    SELECT *
+                    FROM customers
+                    WHERE account_number = ?
+                    LIMIT 1
+                    `,
+                    [accountNumber]
+                );
+
+
+            if (!customers.length) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "Customer account could not be found."
+
+                });
+
+            }
+
+
+            const customer =
+                customers[0];
+
+
+            const databaseCustomerId =
+                customer.customer_id !== undefined
+                    ? customer.customer_id
+                    : customer.id;
+
+
+            if (
+                String(databaseCustomerId) !==
+                String(customerId)
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    message:
+                        "Enrollment session is invalid."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // CHECK ENROLLMENT
+            // ==================================================
+
+            if (
+                customer.online_enrolled !== undefined &&
+                Number(
+                    customer.online_enrolled
+                ) === 1
+            ) {
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    message:
+                        "This customer is already enrolled."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // HASH PASSWORD
+            // ==================================================
+
+            const passwordHash =
+                await bcrypt.hash(
+                    password,
+                    10
+                );
+
+
+            // ==================================================
+            // CREATE USER
+            // ==================================================
+
+            await pool.query(
+                `
+                INSERT INTO online_users
+                (
+                    customer_id,
+                    username,
+                    password_hash,
+                    active
+                )
+                VALUES (?, ?, ?, 1)
+                `,
+                [
+                    databaseCustomerId,
+                    username,
+                    passwordHash
+                ]
+            );
+
+
+            // ==================================================
+            // MARK CUSTOMER ENROLLED
+            // ==================================================
+
+            await pool.query(
+                `
+                UPDATE customers
+                SET online_enrolled = 1
+                WHERE account_number = ?
+                `,
+                [accountNumber]
+            );
+
+
+            // ==================================================
+            // DESTROY ENROLLMENT SESSION
+            // ==================================================
 
             delete req.session.enrollment;
 
-            return res.status(401).json({
+
+            return res.status(201).json({
+
+                success: true,
+
+                message:
+                    "Online banking account created successfully."
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "CREATE USER ERROR:",
+                error
+            );
+
+
+            if (
+                error.code === "ER_DUP_ENTRY"
+            ) {
+
+                return res.status(409).json({
+
+                    success: false,
+
+                    message:
+                        "Username is already taken."
+
+                });
+
+            }
+
+
+            return res.status(500).json({
 
                 success: false,
-                message: "Enrollment session has expired. Please verify your identity again."
+
+                message:
+                    "Unable to create online banking account."
 
             });
 
         }
-
-
-        // --------------------------------------------------
-        // Validate username
-        // --------------------------------------------------
-
-        if (!/^[A-Za-z0-9_]{6,20}$/.test(username)) {
-
-            return res.status(400).json({
-
-                success: false,
-                message: "Username must contain 6-20 letters, numbers or underscores."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Validate password
-        // --------------------------------------------------
-
-        if (password.length < 8) {
-
-            return res.status(400).json({
-
-                success: false,
-                message: "Password must be at least 8 characters."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Check username again
-        // --------------------------------------------------
-
-        const [existingUsers] = await pool.query(
-            
-            SELECT customer_id
-            FROM online_users
-            WHERE username = ?
-            LIMIT 1
-            ,
-            [username]
-        );
-
-
-        if (existingUsers.length > 0) {
-
-            return res.status(409).json({
-
-                success: false,
-                message: "Username is already taken."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Get customer
-        // --------------------------------------------------
-
-        const customerId =
-            req.session.enrollment.customerId;
-
-
-        const accountNumber =
-            req.session.enrollment.accountNumber;
-
-
-        const [customers] = await pool.query(
-            
-            SELECT *
-            FROM customers
-            WHERE account_number = ?
-            LIMIT 1
-            ,
-            [accountNumber]
-        );
-
-
-        if (!customers.length) {
-
-            return res.status(404).json({
-
-                success: false,
-                message: "Customer account could not be found."
-
-            });
-
-        }
-
-
-        const customer =
-            customers[0];
-
-
-        // Make sure same customer
-
-        const databaseCustomerId =
-            customer.customer_id !== undefined
-                ? customer.customer_id
-                : customer.id;
-
-
-        if (
-            String(databaseCustomerId) !==
-            String(customerId)
-        ) {
-
-            return res.status(403).json({
-
-                success: false,
-                message: "Enrollment session is invalid."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Check enrollment status
-        // --------------------------------------------------
-
-        if (
-            customer.online_enrolled !== undefined &&
-            Number(customer.online_enrolled) === 1
-        ) {
-
-            return res.status(409).json({
-
-                success: false,
-                message: "This customer is already enrolled."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Hash password
-        // --------------------------------------------------
-
-        const passwordHash =
-            await bcrypt.hash(password, 10);
-
-
-        // --------------------------------------------------
-        // Create online banking user
-        // --------------------------------------------------
-
-        await pool.query(
-            
-            INSERT INTO online_users
-            (
-                customer_id,
-                username,
-                password_hash,
-                active
-            )
-            VALUES (?, ?, ?, 1)
-            ,
-            [
-                databaseCustomerId,
-                username,
-                passwordHash
-            ]
-        );
-
-
-        // --------------------------------------------------
-        // Mark customer as enrolled
-        // --------------------------------------------------
-
-        await pool.query(
-            
-            UPDATE customers
-            SET online_enrolled = 1
-            WHERE account_number = ?
-            ,
-            [accountNumber]
-        );
-
-
-        // --------------------------------------------------
-        // Destroy enrollment session
-        // --------------------------------------------------
-
-        delete req.session.enrollment;
-
-
-        return res.status(201).json({
-
-            success: true,
-
-            message:
-                "Online banking account created successfully."
-
-        });
-
-    } catch (error) {
-
-        console.error("CREATE USER ERROR:");
-        console.error(error);
-
-        // Duplicate username protection
-
-        if (error.code === "ER_DUP_ENTRY") {
-
-            return res.status(409).json({
-
-                success: false,
-                message: "Username is already taken."
-
-            });
-
-        }
-
-
-        return res.status(500).json({
-
-            success: false,
-            message:
-                "Unable to create online banking account."
-
-        });
 
     }
-
-});
+);
 
 
 // ======================================================
 // LOGIN
 // ======================================================
 
-app.post("/api/login", async (req, res) => {
+app.post(
+    "/api/login",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const username =
-            String(req.body.username || "").trim();
+            const username =
+                String(
+                    req.body.username || ""
+                ).trim();
 
-        const password =
-            String(req.body.password || "");
+            const password =
+                String(
+                    req.body.password || ""
+                );
 
 
-        if (!username || !password) {
+            if (
+                !username ||
+                !password
+            ) {
 
-            return res.status(400).json({
+                return res.status(400).json({
 
-                success: false,
-                message: "Username and password are required."
+                    success: false,
+
+                    message:
+                        "Username and password are required."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // FIND USER
+            // ==================================================
+
+            const [rows] =
+                await pool.query(
+                    `
+                    SELECT *
+                    FROM online_users
+                    WHERE username = ?
+                    LIMIT 1
+                    `,
+                    [username]
+                );
+
+
+            if (!rows.length) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid username or password."
+
+                });
+
+            }
+
+
+            const user =
+                rows[0];
+
+
+            // ==================================================
+            // CHECK ACTIVE
+            // ==================================================
+
+            if (
+                user.active !== undefined &&
+                Number(user.active) !== 1
+            ) {
+
+                return res.status(403).json({
+
+                    success: false,
+
+                    message:
+                        "Online banking account is inactive."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // PASSWORD HASH
+            // ==================================================
+
+            let passwordHash =
+                String(
+                    user.password_hash ||
+                    user.password ||
+                    ""
+                );
+
+
+            if (!passwordHash) {
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Password configuration error."
+
+                });
+
+            }
+
+
+            // PHP bcrypt compatibility
+
+            if (
+                passwordHash.startsWith("$2y$")
+            ) {
+
+                passwordHash =
+                    "$2b$" +
+                    passwordHash.substring(4);
+
+            }
+
+
+            // ==================================================
+            // COMPARE PASSWORD
+            // ==================================================
+
+            const passwordMatches =
+                await bcrypt.compare(
+                    password,
+                    passwordHash
+                );
+
+
+            if (!passwordMatches) {
+
+                return res.status(401).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid username or password."
+
+                });
+
+            }
+
+
+            // ==================================================
+            // STORE LOGIN SESSION
+            // ==================================================
+
+            const customerId =
+                user.customer_id !== undefined
+                    ? user.customer_id
+                    : user.id;
+
+
+            req.session.user = {
+
+                userId:
+                    user.id !== undefined
+                        ? user.id
+                        : user.user_id,
+
+                customerId:
+                    customerId,
+
+                username:
+                    user.username
+
+            };
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Login successful.",
+
+                redirect:
+                    "/dashboard.html"
 
             });
 
-        }
+        } catch (error) {
 
-
-        // --------------------------------------------------
-        // Find online user
-        // --------------------------------------------------
-
-        const [rows] = await pool.query(
-            
-            SELECT *
-            FROM online_users
-            WHERE username = ?
-            LIMIT 1
-            ,
-            [username]
-        );
-
-
-        if (!rows.length) {
-
-            return res.status(401).json({
-
-                success: false,
-                message: "Invalid username or password."
-
-            });
-
-        }
-
-
-        const user =
-            rows[0];
-
-
-        // --------------------------------------------------
-        // Check active
-        // --------------------------------------------------
-
-        if (
-            user.active !== undefined &&
-            Number(user.active) !== 1
-        ) {
-
-            return res.status(403).json({
-
-                success: false,
-                message: "Online banking account is inactive."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Get password hash
-        // --------------------------------------------------
-
-        let passwordHash =
-            String(
-                user.password_hash ||
-                user.password ||
-                ""
+            console.error(
+                "LOGIN ERROR:",
+                error
             );
-
-
-        if (!passwordHash) {
 
             return res.status(500).json({
 
                 success: false,
-                message: "Password configuration error."
+
+                message:
+                    "Unable to process login."
 
             });
 
         }
-
-
-        // PHP bcrypt compatibility
-
-        if (passwordHash.startsWith("$2y$")) {
-
-            passwordHash =
-                "$2b$" + passwordHash.substring(4);
-
-        }
-
-
-        // --------------------------------------------------
-        // Compare password
-        // --------------------------------------------------
-
-        const passwordMatches =
-            await bcrypt.compare(
-                password,
-                passwordHash
-            );
-
-
-        if (!passwordMatches) {
-
-            return res.status(401).json({
-
-                success: false,
-                message: "Invalid username or password."
-
-            });
-
-        }
-
-
-        // --------------------------------------------------
-        // Store login session
-        // --------------------------------------------------
-
-        const customerId =
-            user.customer_id !== undefined
-                ? user.customer_id
-                : user.id;
-
-
-        req.session.user = {
-
-            userId:
-                user.id !== undefined
-                    ? user.id
-                    : user.user_id,
-
-            customerId:
-                customerId,
-
-            username:
-                user.username
-
-        };
-
-
-        return res.json({
-
-            success: true,
-
-            message:
-                "Login successful.",
-
-            redirect:
-                "dashboard.html"
-
-        });
-
-    } catch (error) {
-
-        console.error("LOGIN ERROR:");
-        console.error(error);
-
-        return res.status(500).json({
-
-            success: false,
-            message: "Unable to process login."
-
-        });
 
     }
-
-});
+);
 
 
 // ======================================================
 // DASHBOARD
 // ======================================================
 
-app.get("/api/dashboard", async (req, res) => {
-
-    try {
-
-        // --------------------------------------------------
-        // Check session
-        // --------------------------------------------------
-
-        if (!req.session.user) {
-
-            return res.status(401).json({
-
-                success: false,
-                message: "Not authenticated."
-
-            });
-
-        }
-
-
-        const customerId =
-            req.session.user.customerId;
-
-
-        // --------------------------------------------------
-        // Get customer
-        // --------------------------------------------------
-
-        const [customers] = await pool.query(
-            
-            SELECT *
-            FROM customers
-            WHERE customer_id = ?
-            LIMIT 1
-            ,
-            [customerId]
-        );
-
-
-        if (!customers.length) {
-
-            return res.status(404).json({
-
-                success: false,
-                message: "Customer information not found."
-
-            });
-
-        }
-
-
-        const customer =
-            customers[0];
-
-
-        // --------------------------------------------------
-        // Get account information
-        //
-        // This query assumes an accounts table.
-        // If your balances are stored directly in customers,
-        // this part can be adjusted to your exact schema.
-        // --------------------------------------------------
-
-        let accounts = [];
-
+app.get(
+    "/api/dashboard",
+    async (req, res) => {
 
         try {
 
-            const [accountRows] = await pool.query(
-                
-                SELECT
-                    account_number,
-                    account_type,
-                    current_balance,
-                    available_balance,
-                    status
-                FROM accounts
-                WHERE customer_id = ?
-                AND status = 'active'
-                AND account_type IN ('checking', 'savings')
-                ORDER BY account_type
-                ,
-                [customerId]
-            );
-
-
-            accounts = accountRows;
-
-        } catch (accountError) {
-
             console.log(
-                "Accounts table query failed:",
-                accountError.message
+                "DASHBOARD REQUEST"
             );
 
-            // If accounts table is not available,
-            // return customer-level balance fields if present.
 
-            if (
-                customer.account_number !== undefined
-            ) {
+            // ==================================================
+            // CHECK LOGIN SESSION
+            // ==================================================
 
-                accounts = [{
+            if (!req.session.user) {
 
-                    account_number:
-                        customer.account_number,
+                console.log(
+                    "DASHBOARD: NOT AUTHENTICATED"
+                );
 
-                    account_type:
-                        customer.account_type ||
-                        "checking",
+                return res.status(401).json({
 
-                    current_balance:
-                        customer.current_balance ||
-                        customer.balance ||
-                        0,
+                    success: false,
 
-                    available_balance:
-                        customer.available_balance ||
-                        customer.current_balance ||
-                        customer.balance ||
-                        0,
+                    message:
+                        "Not authenticated."
 
-                    status:
-                        "active"
-
-                }];
+                });
 
             }
 
-        }
+
+            const customerId =
+                req.session.user.customerId;
 
 
-        // --------------------------------------------------
-        // Mask account number
-        // --------------------------------------------------
-
-        accounts =
-            accounts.map(account => {
-
-                const number =
-                    String(
-                        account.account_number || ""
-                    );
-
-                const last4 =
-                    number.slice(-4);
+            console.log(
+                "Dashboard customer ID:",
+                customerId
+            );
 
 
-                return {
+            // ==================================================
+            // GET CUSTOMER
+            // ==================================================
 
-                    account_type:
-                        account.account_type,
+            const [customers] =
+                await pool.query(
+                    `
+                    SELECT *
+                    FROM customers
+                    WHERE customer_id = ?
+                    LIMIT 1
+                    `,
+                    [customerId]
+                );
 
-                    account_number:
-                        ••••${last4},
 
-                    current_balance:
-                        Number(
-                            account.current_balance || 0
-                        ),
+            if (!customers.length) {
 
-                    available_balance:
-                        Number(
-                            account.available_balance || 0
-                        )
+                return res.status(404).json({
 
-                };
+                    success: false,
+
+                    message:
+                        "Customer information not found."
+
+                });
+
+            }
+
+
+            const customer =
+                customers[0];
+
+
+            // ==================================================
+            // USE CUSTOMER TABLE BALANCE DATA
+            //
+            // This matches your existing schema.
+            // No accounts table is required.
+            // ==================================================
+
+            const accountNumber =
+                String(
+                    customer.account_number || ""
+                );
+
+
+            const accountType =
+                customer.account_type ||
+                "checking";
+
+
+            const currentBalance =
+                Number(
+                    customer.current_balance ??
+                    customer.balance ??
+                    0
+                );
+
+
+            const availableBalance =
+                Number(
+                    customer.available_balance ??
+                    customer.current_balance ??
+                    customer.balance ??
+                    0
+                );
+
+
+            const accountStatus =
+                customer.account_status ||
+                "active";
+
+
+            // ==================================================
+            // MASK ACCOUNT NUMBER
+            // ==================================================
+
+            let maskedAccount =
+                accountNumber;
+
+
+            if (
+                accountNumber.length > 4
+            ) {
+
+                maskedAccount =
+                    `••••${accountNumber.slice(-4)}`;
+
+            }
+
+
+            // ==================================================
+            // GET FIRST NAME
+            // ==================================================
+
+            const firstName =
+                customer.first_name ||
+                customer.firstname ||
+                "";
+
+
+            const lastName =
+                customer.last_name ||
+                customer.lastname ||
+                "";
+
+
+            // ==================================================
+            // RETURN JSON
+            //
+            // IMPORTANT:
+            // These names match dashboard.js
+            // ==================================================
+
+            return res.status(200).json({
+
+                success: true,
+
+                first_name:
+                    firstName,
+
+                last_name:
+                    lastName,
+
+                username:
+                    req.session.user.username,
+
+                account_number:
+                    maskedAccount,
+
+                account_type:
+                    accountType,
+
+                current_balance:
+                    currentBalance,
+
+                available_balance:
+                    availableBalance,
+
+                account_status:
+                    accountStatus
 
             });
 
+        } catch (error) {
 
-        // --------------------------------------------------
-        // Return dashboard
-        // --------------------------------------------------
+            console.error(
+                "DASHBOARD ERROR:"
+            );
 
-        return res.json({
+            console.error(
+                error
+            );
 
-            success: true,
 
-            customer: {
+            return res.status(500).json({
 
-                first_name:
-                    customer.first_name ||
-                    customer.firstname ||
-                    "",
+                success: false,
 
-                last_name:
-                    customer.last_name ||
-                    customer.lastname ||
-                    ""
+                message:
+                    "Unable to load account information."
 
-            },
+            });
 
-            username:
-                req.session.user.username,
-
-            accounts:
-                accounts
-
-        });
-
-    } catch (error) {
-
-        console.error("DASHBOARD ERROR:");
-        console.error(error);
-
-        return res.status(500).json({
-
-            success: false,
-            message:
-                "Unable to load account information."
-
-        });
+        }
 
     }
-
-});
+);
 
 
 // ======================================================
 // LOGOUT
 // ======================================================
 
-app.post("/api/logout", (req, res) => {
+app.post(
+    "/api/logout",
+    (req, res) => {
 
-    req.session.destroy(error => {
+        req.session.destroy(
+            error => {
 
-        if (error) {
+                if (error) {
 
-            console.error("LOGOUT ERROR:", error);
+                    console.error(
+                        "LOGOUT ERROR:",
+                        error
+                    );
 
-            return res.status(500).json({
+                    return res.status(500).json({
 
-                success: false,
-                message: "Unable to log out."
+                        success: false,
 
-            });
+                        message:
+                            "Unable to log out."
 
-        }
+                    });
+
+                }
 
 
-        res.clearCookie("connect.sid");
+                res.clearCookie(
+                    "connect.sid"
+                );
 
 
-        return res.json({
+                return res.json({
 
-            success: true,
+                    success: true,
 
-            message:
-                "Logged out successfully.",
+                    message:
+                        "Logged out successfully.",
 
-            redirect:
-                "login.html"
+                    redirect:
+                        "/login.html"
 
-        });
+                });
 
-    });
+            }
+        );
 
-});
+    }
+);
 
 
 // ======================================================
 // STATIC FRONTEND
 // ======================================================
 
-app.use(express.static(__dirname));
+app.use(
+    express.static(__dirname)
+);
 
 
 // ======================================================
 // 404 API HANDLER
 // ======================================================
 
-app.use("/api", (req, res) => {
+app.use(
+    "/api",
+    (req, res) => {
 
-    res.status(404).json({
+        return res.status(404).json({
 
-        success: false,
-        message: "API endpoint not found."
+            success: false,
 
-    });
+            message:
+                "API endpoint not found."
 
-});
+        });
+
+    }
+);
 
 
 // ======================================================
@@ -1339,7 +1513,7 @@ app.listen(
     () => {
 
         console.log(
-            Upright Bank server running on port ${PORT}
+            `Upright Bank server running on port ${PORT}`
         );
 
     }
