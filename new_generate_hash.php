@@ -12,3 +12,11 @@ echo "9001002014: " . password_hash('ENROLL2965', PASSWORD_DEFAULT) . "<br>";
 echo "9001002015: " . password_hash('ENROLL8519', PASSWORD_DEFAULT) . "<br>";
 echo "9001002016: " . password_hash('ENROLL3742', PASSWORD_DEFAULT) . "<br>";
 echo "9001002017: " . password_hash('ENROLL5296', PASSWORD_DEFAULT) . "<br>";
+
+echo "9001002021: " . password_hash('ENROLL2021', PASSWORD_DEFAULT) . "<br>";
+echo "9001002022: " . password_hash('ENROLL2022', PASSWORD_DEFAULT) . "<br>";
+echo "9001002023: " . password_hash('ENROLL2023', PASSWORD_DEFAULT) . "<br>";
+echo "9001002024: " . password_hash('ENROLL2024', PASSWORD_DEFAULT) . "<br>";
+echo "9001002025: " . password_hash('ENROLL2025', PASSWORD_DEFAULT) . "<br>";
+
+?>
