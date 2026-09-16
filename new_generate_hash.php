@@ -20,10 +20,10 @@ echo "9001002024: " . password_hash('ENROLL2024', PASSWORD_DEFAULT) . "<br>";
 echo "9001002025: " . password_hash('ENROLL2025', PASSWORD_DEFAULT) . "<br>";
 
 
-echo "ENROLL2026: " . password_hash('ENROLL2026', PASSWORD_DEFAULT) . PHP_EOL;
-echo "ENROLL2027: " . password_hash('ENROLL2027', PASSWORD_DEFAULT) . PHP_EOL;
-echo "ENROLL2028: " . password_hash('ENROLL2028', PASSWORD_DEFAULT) . PHP_EOL;
-echo "ENROLL2029: " . password_hash('ENROLL2029', PASSWORD_DEFAULT) . PHP_EOL;
-echo "ENROLL2030: " . password_hash('ENROLL2030', PASSWORD_DEFAULT) . PHP_EOL;
+echo "ENROLL2026: " . password_hash('ENROLL2026', PASSWORD_DEFAULT) . "<br>";
+echo "ENROLL2027: " . password_hash('ENROLL2027', PASSWORD_DEFAULT) . "<br>";
+echo "ENROLL2028: " . password_hash('ENROLL2028', PASSWORD_DEFAULT) . "<br>";
+echo "ENROLL2029: " . password_hash('ENROLL2029', PASSWORD_DEFAULT) . "<br>";
+echo "ENROLL2030: " . password_hash('ENROLL2030', PASSWORD_DEFAULT) . "<br>";
 
 ?>
