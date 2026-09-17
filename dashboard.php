@@ -6,15 +6,9 @@ session_start();
 
 require_once __DIR__ . '/config.php';
 
-/*
-========================================================
-UPRIGHT BANK - ONLINE BANKING DASHBOARD
-========================================================
-*/
-
 
 // ======================================================
-// CHECK LOGIN SESSION
+// CHECK LOGIN
 // ======================================================
 
 if (!isset($_SESSION['customer_id'])) {
@@ -26,7 +20,7 @@ $customerId = (int) $_SESSION['customer_id'];
 
 
 // ======================================================
-// GET CUSTOMER ACCOUNT INFORMATION
+// GET CUSTOMER
 // ======================================================
 
 try {
@@ -49,42 +43,37 @@ try {
 
 } catch (Throwable $e) {
 
-    error_log(
-        'Dashboard query failed: ' . $e->getMessage()
-    );
+    error_log("Dashboard query failed: " . $e->getMessage());
 
-    $customer = false;
+    die("Unable to load account information.");
 }
 
 
 // ======================================================
-// CUSTOMER NOT FOUND
+// CHECK CUSTOMER
 // ======================================================
 
 if (!$customer) {
-
-    $accountNumber = 'N/A';
-    $balance = 0;
-
-} else {
-
-    $accountNumber =
-        (string)($customer['account_number'] ?? 'N/A');
-
-    $balance =
-        (float)($customer['balance'] ?? 0);
-
+    die("Customer account was not found.");
 }
+
+
+// ======================================================
+// ACCOUNT INFORMATION
+// ======================================================
+
+$accountNumber = (string) $customer['account_number'];
+
+$balance = (float) $customer['balance'];
+
+$username = (string) ($_SESSION['username'] ?? '');
 
 
 // ======================================================
 // MASK ACCOUNT NUMBER
 // ======================================================
 
-if (
-    $accountNumber !== 'N/A' &&
-    strlen($accountNumber) > 4
-) {
+if (strlen($accountNumber) > 4) {
 
     $maskedAccount =
         '••••' . substr($accountNumber, -4);
@@ -92,19 +81,8 @@ if (
 } else {
 
     $maskedAccount = $accountNumber;
+
 }
-
-
-// ======================================================
-// USERNAME
-// ======================================================
-
-$username =
-    htmlspecialchars(
-        (string)($_SESSION['username'] ?? ''),
-        ENT_QUOTES,
-        'UTF-8'
-    );
 
 ?>
 
@@ -131,226 +109,81 @@ $username =
 
         body {
             margin: 0;
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-
+            font-family: Arial, sans-serif;
             background: #f4f7fb;
             color: #222;
         }
 
-        /* =============================================
-           HEADER
-        ============================================= */
-
         .header {
-            width: 100%;
-            background: #ffffff;
-
+            background: #fff;
             padding: 20px 40px;
+            border-bottom: 1px solid #ddd;
 
             display: flex;
-            align-items: center;
             justify-content: space-between;
-
-            border-bottom: 1px solid #e5e5e5;
+            align-items: center;
         }
 
         .logo {
-            font-size: 25px;
-            font-weight: 700;
+            font-size: 24px;
+            font-weight: bold;
         }
 
         .logout {
-            display: inline-block;
-
-            padding: 11px 20px;
-
-            background: #222;
-            color: #ffffff;
-
             text-decoration: none;
-
-            border-radius: 7px;
-
-            font-size: 14px;
+            color: #fff;
+            background: #222;
+            padding: 10px 18px;
+            border-radius: 6px;
         }
-
-        .logout:hover {
-            opacity: 0.85;
-        }
-
-
-        /* =============================================
-           MAIN CONTAINER
-        ============================================= */
 
         .container {
-            width: 100%;
             max-width: 1000px;
-
-            margin: 45px auto;
-
-            padding: 0 20px;
+            margin: 50px auto;
+            padding: 20px;
         }
 
-
-        /* =============================================
-           WELCOME
-        ============================================= */
+        h1 {
+            margin-bottom: 8px;
+        }
 
         .welcome {
+            color: #666;
             margin-bottom: 30px;
         }
 
-        .welcome h1 {
-            margin: 0 0 8px;
-
-            font-size: 32px;
-        }
-
-        .welcome p {
-            margin: 0;
-
-            color: #666;
-
-            font-size: 16px;
-        }
-
-
-        /* =============================================
-           ACCOUNT CARD
-        ============================================= */
-
-        .account-card {
-
-            background: #ffffff;
-
+        .card {
+            background: #fff;
             border-radius: 15px;
-
-            padding: 32px;
+            padding: 35px;
 
             box-shadow:
-                0 5px 25px
-                rgba(0, 0, 0, 0.08);
+                0 5px 25px rgba(0,0,0,0.08);
         }
 
-
-        /* =============================================
-           ACCOUNT NUMBER
-        ============================================= */
-
-        .account-title {
-
+        .label {
             color: #777;
-
             font-size: 14px;
-
             margin-bottom: 8px;
         }
 
-        .account-number {
-
+        .account {
             font-size: 22px;
-
-            font-weight: 600;
-
+            font-weight: bold;
             margin-bottom: 35px;
         }
 
-
-        /* =============================================
-           BALANCE
-        ============================================= */
-
-        .balance-title {
-
-            color: #777;
-
-            font-size: 15px;
-
-            margin-bottom: 8px;
-        }
-
         .balance {
-
-            font-size: 44px;
-
-            font-weight: 700;
-
-            margin-bottom: 10px;
-        }
-
-        .balance-note {
-
-            color: #777;
-
-            font-size: 13px;
-        }
-
-
-        /* =============================================
-           ERROR
-        ============================================= */
-
-        .error {
-
-            background: #fff1f1;
-
-            border: 1px solid #ffd0d0;
-
-            color: #b00020;
-
-            padding: 20px;
-
-            border-radius: 10px;
-        }
-
-
-        /* =============================================
-           MOBILE
-        ============================================= */
-
-        @media (max-width: 600px) {
-
-            .header {
-                padding: 18px 20px;
-            }
-
-            .logo {
-                font-size: 21px;
-            }
-
-            .container {
-                margin-top: 30px;
-            }
-
-            .welcome h1 {
-                font-size: 26px;
-            }
-
-            .account-card {
-                padding: 25px;
-            }
-
-            .balance {
-                font-size: 36px;
-            }
-
+            font-size: 45px;
+            font-weight: bold;
         }
 
     </style>
 
 </head>
 
-
 <body>
 
-
-<!-- ==================================================
-     HEADER
-=================================================== -->
 
 <header class="header">
 
@@ -358,110 +191,66 @@ $username =
         Upright Bank
     </div>
 
-    <a
-        href="logout.php"
-        class="logout"
-    >
+    <a href="logout.php" class="logout">
         Logout
     </a>
 
 </header>
 
 
-<!-- ==================================================
-     MAIN
-=================================================== -->
-
 <main class="container">
 
-
-    <!-- WELCOME -->
+    <h1>
+        Online Banking Dashboard
+    </h1>
 
     <div class="welcome">
 
-        <h1>
-            Online Banking Dashboard
-        </h1>
-
-        <p>
-            Welcome,
-            <?php echo $username; ?>
-        </p>
+        Welcome,
+        <?php
+        echo htmlspecialchars(
+            $username,
+            ENT_QUOTES,
+            'UTF-8'
+        );
+        ?>
 
     </div>
 
 
-    <?php if ($customer): ?>
+    <div class="card">
 
+        <div class="label">
+            My Account
+        </div>
 
-        <!-- ==========================================
-             ACCOUNT CARD
-        =========================================== -->
+        <div class="account">
 
-        <div class="account-card">
-
-
-            <!-- ACCOUNT NUMBER -->
-
-            <div class="account-title">
-                My Account
-            </div>
-
-            <div class="account-number">
-
-                <?php
-                echo htmlspecialchars(
-                    $maskedAccount,
-                    ENT_QUOTES,
-                    'UTF-8'
-                );
-                ?>
-
-            </div>
-
-
-            <!-- BALANCE -->
-
-            <div class="balance-title">
-                Available Balance
-            </div>
-
-            <div class="balance">
-
-                $
-                <?php
-                echo number_format(
-                    $balance,
-                    2
-                );
-                ?>
-
-            </div>
-
-            <div class="balance-note">
-                Current account balance
-            </div>
-
+            <?php
+            echo htmlspecialchars(
+                $maskedAccount,
+                ENT_QUOTES,
+                'UTF-8'
+            );
+            ?>
 
         </div>
 
 
-    <?php else: ?>
+        <div class="label">
+            Available Balance
+        </div>
 
+        <div class="balance">
 
-        <!-- ==========================================
-             CUSTOMER NOT FOUND
-        =========================================== -->
-
-        <div class="error">
-
-            Account information could not be found.
+            $
+            <?php
+            echo number_format($balance, 2);
+            ?>
 
         </div>
 
-
-    <?php endif; ?>
-
+    </div>
 
 </main>
 
