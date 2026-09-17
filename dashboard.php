@@ -1,6 +1,4 @@
-
 <?php
-
 declare(strict_types=1);
 
 session_start();
@@ -9,7 +7,7 @@ require_once __DIR__ . '/config.php';
 
 /*
 |--------------------------------------------------------------------------
-| AUTHENTICATION
+| Check Login Session
 |--------------------------------------------------------------------------
 */
 
@@ -20,10 +18,13 @@ if (!isset($_SESSION['customer_id'])) {
 
 $customerId = (int) $_SESSION['customer_id'];
 
+$username = isset($_SESSION['username'])
+    ? (string) $_SESSION['username']
+    : '';
 
 /*
 |--------------------------------------------------------------------------
-| GET CUSTOMER DATA
+| Get Customer Information
 |--------------------------------------------------------------------------
 */
 
@@ -38,7 +39,9 @@ try {
             account_type,
             account_status,
             current_balance,
-            available_balance
+            available_balance,
+            email,
+            phone
         FROM customers
         WHERE id = :customer_id
         LIMIT 1
@@ -50,62 +53,133 @@ try {
 
     $customer = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$customer) {
-        header('Location: login.html');
-        exit;
-    }
-
 } catch (Throwable $e) {
 
-    error_log(
-        'Dashboard database error: ' . $e->getMessage()
-    );
+    error_log('Dashboard customer query failed: ' . $e->getMessage());
+
+    http_response_code(500);
+
+    echo 'Unable to load account information.';
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Customer Not Found
+|--------------------------------------------------------------------------
+*/
+
+if (!$customer) {
+
+    session_unset();
+    session_destroy();
 
     header('Location: login.html');
     exit;
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| PREPARE DATA FOR DISPLAY
+| Customer Information
 |--------------------------------------------------------------------------
 */
 
-$fullName = trim(
-    $customer['first_name'] . ' ' .
-    $customer['last_name']
-);
+$firstName = (string) ($customer['first_name'] ?? '');
+$lastName = (string) ($customer['last_name'] ?? '');
 
-$accountNumber = $customer['account_number'];
+$fullName = trim($firstName . ' ' . $lastName);
 
-$maskedAccount =
-    '••••' . substr($accountNumber, -4);
+if ($fullName === '') {
+    $fullName = 'Customer';
+}
 
-$currentBalance = number_format(
-    (float) $customer['current_balance'],
-    2
-);
-
-$availableBalance = number_format(
-    (float) $customer['available_balance'],
-    2
-);
+$accountNumber = (string) ($customer['account_number'] ?? '');
 
 $accountType = ucfirst(
-    $customer['account_type']
+    strtolower((string) ($customer['account_type'] ?? 'checking'))
 );
 
 $accountStatus = ucfirst(
-    $customer['account_status']
+    strtolower((string) ($customer['account_status'] ?? 'active'))
 );
 
-$username = $_SESSION['username'] ?? '';
+/*
+|--------------------------------------------------------------------------
+| Balance
+|--------------------------------------------------------------------------
+*/
+
+$currentBalance = (float) ($customer['current_balance'] ?? 0);
+$availableBalance = (float) ($customer['available_balance'] ?? 0);
+
+/*
+|--------------------------------------------------------------------------
+| Format Account Number
+|--------------------------------------------------------------------------
+*/
+
+$lastFour = substr($accountNumber, -4);
+
+$maskedAccountNumber = '••••' . $lastFour;
+
+/*
+|--------------------------------------------------------------------------
+| Format Balances
+|--------------------------------------------------------------------------
+*/
+
+$currentBalanceFormatted = number_format(
+    $currentBalance,
+    2,
+    '.',
+    ','
+);
+
+$availableBalanceFormatted = number_format(
+    $availableBalance,
+    2,
+    '.',
+    ','
+);
+
+/*
+|--------------------------------------------------------------------------
+| Escape Output
+|--------------------------------------------------------------------------
+*/
+
+$safeFullName = htmlspecialchars(
+    $fullName,
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$safeUsername = htmlspecialchars(
+    $username,
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$safeAccountNumber = htmlspecialchars(
+    $maskedAccountNumber,
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$safeAccountType = htmlspecialchars(
+    $accountType,
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$safeAccountStatus = htmlspecialchars(
+    $accountStatus,
+    ENT_QUOTES,
+    'UTF-8'
+);
 
 ?>
-
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -117,500 +191,351 @@ $username = $_SESSION['username'] ?? '';
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Upright Bank Dashboard</title>
-
+    <title>Upright Bank - Dashboard</title>
 
     <style>
-
-        /* =========================================
-           RESET
-        ========================================= */
 
         * {
             box-sizing: border-box;
         }
 
-
-        /* =========================================
-           BODY
-        ========================================= */
-
         body {
             margin: 0;
-
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-
+            font-family: Arial, Helvetica, sans-serif;
             background: #f4f7fb;
-
             color: #1f2937;
         }
 
-
-        /* =========================================
-           HEADER
-        ========================================= */
-
-        .header {
-            background: #0b1f3a;
-
+        .topbar {
+            width: 100%;
+            background: #123c69;
             color: #ffffff;
-
             padding: 18px 30px;
-
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
         }
 
-
-        .logo {
+        .bank-name {
             font-size: 24px;
-
             font-weight: 700;
         }
 
-
         .logout-button {
-            background: transparent;
-
-            border: 1px solid
-                rgba(255, 255, 255, 0.5);
-
-            color: #ffffff;
-
-            padding: 9px 18px;
-
+            display: inline-block;
+            padding: 10px 18px;
+            background: #ffffff;
+            color: #123c69;
+            text-decoration: none;
             border-radius: 6px;
-
-            cursor: pointer;
-
             font-size: 14px;
+            font-weight: 600;
         }
-
 
         .logout-button:hover {
-            background:
-                rgba(255, 255, 255, 0.1);
+            background: #eaf0f7;
         }
 
-
-        /* =========================================
-           MAIN CONTAINER
-        ========================================= */
-
         .container {
-            max-width: 1100px;
-
             width: 100%;
-
+            max-width: 1100px;
             margin: 40px auto;
-
             padding: 0 20px;
         }
 
-
-        /* =========================================
-           WELCOME
-        ========================================= */
-
         .welcome {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
-
 
         .welcome h1 {
-            margin: 0 0 8px;
-
-            color: #0b1f3a;
-
+            margin: 0 0 8px 0;
             font-size: 30px;
+            color: #123c69;
         }
-
 
         .welcome p {
             margin: 0;
-
-            color: #667085;
-
+            color: #6b7280;
             font-size: 15px;
         }
 
-
-        /* =========================================
-           DASHBOARD GRID
-        ========================================= */
-
-        .dashboard-grid {
+        .balance-grid {
             display: grid;
-
-            grid-template-columns:
-                repeat(2, 1fr);
-
-            gap: 22px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
         }
-
-
-        /* =========================================
-           CARD
-        ========================================= */
-
-        .card {
-            background: #ffffff;
-
-            border-radius: 14px;
-
-            padding: 25px;
-
-            box-shadow:
-                0 5px 20px
-                rgba(0, 0, 0, 0.06);
-        }
-
-
-        .card h2 {
-            margin: 0 0 20px;
-
-            color: #0b1f3a;
-
-            font-size: 20px;
-        }
-
-
-        /* =========================================
-           BALANCE CARD
-        ========================================= */
 
         .balance-card {
-            grid-column: span 2;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 28px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
         }
-
 
         .balance-label {
-            margin-bottom: 8px;
-
-            color: #667085;
-
-            font-size: 14px;
+            color: #6b7280;
+            font-size: 15px;
+            margin-bottom: 12px;
         }
 
-
-        .balance {
-            margin-bottom: 18px;
-
-            color: #0b1f3a;
-
-            font-size: 40px;
-
+        .balance-amount {
+            color: #123c69;
+            font-size: 34px;
             font-weight: 700;
         }
 
-
-        .available {
-            color: #667085;
-
-            font-size: 14px;
+        .account-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 28px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
         }
 
-
-        .available strong {
-            color: #1f2937;
+        .account-card h2 {
+            margin: 0 0 25px 0;
+            color: #123c69;
+            font-size: 21px;
         }
 
-
-        /* =========================================
-           DETAIL ROW
-        ========================================= */
-
-        .detail-row {
+        .account-row {
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
-
-            padding: 14px 0;
-
-            border-bottom:
-                1px solid #edf0f4;
+            padding: 16px 0;
+            border-bottom: 1px solid #e5e7eb;
         }
 
-
-        .detail-row:last-child {
+        .account-row:last-child {
             border-bottom: none;
         }
 
-
-        .detail-label {
-            color: #667085;
-
-            font-size: 14px;
+        .account-label {
+            color: #6b7280;
+            font-size: 15px;
         }
 
-
-        .detail-value {
-            color: #1f2937;
-
-            font-size: 14px;
-
+        .account-value {
+            color: #111827;
+            font-size: 15px;
             font-weight: 600;
-
             text-align: right;
         }
 
-
-        /* =========================================
-           STATUS
-        ========================================= */
-
         .status {
             display: inline-block;
-
-            padding: 5px 11px;
-
+            padding: 6px 12px;
             border-radius: 20px;
-
             background: #e8f5e9;
-
             color: #2e7d32;
-
             font-size: 13px;
-
             font-weight: 600;
         }
 
-
-        /* =========================================
-           FOOTER
-        ========================================= */
-
         .footer {
-            margin-top: 35px;
-
-            padding-bottom: 25px;
-
             text-align: center;
-
-            color: #98a2b3;
-
+            color: #9ca3af;
             font-size: 13px;
+            margin-top: 35px;
+            padding-bottom: 30px;
         }
-
-
-        /* =========================================
-           MOBILE
-        ========================================= */
 
         @media (max-width: 700px) {
 
-            .header {
-                padding: 15px 18px;
+            .topbar {
+                padding: 16px 18px;
             }
 
-
-            .logo {
+            .bank-name {
                 font-size: 20px;
             }
 
-
             .container {
                 margin-top: 25px;
-
                 padding: 0 15px;
             }
-
-
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-
-            .balance-card {
-                grid-column: span 1;
-            }
-
 
             .welcome h1 {
                 font-size: 25px;
             }
 
-
-            .balance {
-                font-size: 32px;
+            .balance-grid {
+                grid-template-columns: 1fr;
             }
 
+            .balance-card {
+                padding: 22px;
+            }
+
+            .balance-amount {
+                font-size: 29px;
+            }
+
+            .account-card {
+                padding: 20px;
+            }
+
+            .account-row {
+                gap: 15px;
+            }
+
+            .account-value {
+                max-width: 55%;
+            }
         }
 
     </style>
 
 </head>
 
-
 <body>
 
+    <header class="topbar">
 
-    <!-- =========================================
-         HEADER
-    ========================================== -->
-
-    <header class="header">
-
-        <div class="logo">
+        <div class="bank-name">
             Upright Bank
         </div>
 
-
-        <form
-            action="logout.php"
-            method="POST"
+        <a
+            href="logout.php"
+            class="logout-button"
         >
-
-            <button
-                type="submit"
-                class="logout-button"
-            >
-                Logout
-            </button>
-
-        </form>
+            Logout
+        </a>
 
     </header>
 
 
-
-    <!-- =========================================
-         MAIN
-    ========================================== -->
-
     <main class="container">
-
-
-        <!-- =====================================
-             WELCOME
-        ====================================== -->
 
         <section class="welcome">
 
             <h1>
-
-                Welcome,
-                <?= htmlspecialchars(
-                    $fullName,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
-
+                Welcome, <?= $safeFullName ?>
             </h1>
 
-
             <p>
-                Your online banking account overview
+                Welcome to your Upright Bank online banking dashboard.
             </p>
 
         </section>
 
 
+        <section class="balance-grid">
 
-        <!-- =====================================
-             DASHBOARD
-        ====================================== -->
-
-        <section class="dashboard-grid">
-
-
-            <!-- =================================
-                 BALANCE
-            ================================== -->
-
-            <div class="card balance-card">
-
-                <h2>
-                    Account Balance
-                </h2>
-
+            <div class="balance-card">
 
                 <div class="balance-label">
                     Current Balance
                 </div>
 
-
-                <div class="balance">
-
-                    $
-                    <?= htmlspecialchars(
-                        $currentBalance,
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>
-
+                <div class="balance-amount">
+                    $<?= $currentBalanceFormatted ?>
                 </div>
 
+            </div>
 
-                <div class="available">
 
-                    Available Balance:
+            <div class="balance-card">
 
-                    <strong>
+                <div class="balance-label">
+                    Available Balance
+                </div>
 
-                        $
-                        <?= htmlspecialchars(
-                            $availableBalance,
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
+                <div class="balance-amount">
+                    $<?= $availableBalanceFormatted ?>
+                </div>
 
-                    </strong>
+            </div>
+
+        </section>
+
+
+        <section class="account-card">
+
+            <h2>
+                Account Information
+            </h2>
+
+
+            <div class="account-row">
+
+                <div class="account-label">
+                    Customer Name
+                </div>
+
+                <div class="account-value">
+                    <?= $safeFullName ?>
+                </div>
+
+            </div>
+
+
+            <div class="account-row">
+
+                <div class="account-label">
+                    Username
+                </div>
+
+                <div class="account-value">
+                    <?= $safeUsername ?>
+                </div>
+
+            </div>
+
+
+            <div class="account-row">
+
+                <div class="account-label">
+                    Account Number
+                </div>
+
+                <div class="account-value">
+                    <?= $safeAccountNumber ?>
+                </div>
+
+            </div>
+
+
+            <div class="account-row">
+
+                <div class="account-label">
+                    Account Type
+                </div>
+
+                <div class="account-value">
+                    <?= $safeAccountType ?>
+                </div>
+
+            </div>
+
+
+            <div class="account-row">
+
+                <div class="account-label">
+                    Account Status
+                </div>
+
+                <div class="account-value">
+
+                    <span class="status">
+                        <?= $safeAccountStatus ?>
+                    </span>
 
                 </div>
 
             </div>
 
 
-
-            <!-- =================================
-                 ACCOUNT INFORMATION
-            ================================== -->
-
-            <div class="card">
-
-                <h2>
-                    Account Information
-                </h2>
+        </section>
 
 
-                <div class="detail-row">
+        <div class="footer">
+            © <?= date('Y') ?> Upright Bank. All rights reserved.
+        </div>
 
-                    <span class="detail-label">
-                        Account Number
-                    </span>
+    </main>
 
+</body>
 
-                    <span class="detail-value">
-
-                        <?= htmlspecialchars(
-                            $maskedAccount,
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-
-                    </span>
-
-                </div>
-
-
-                <div class="detail-row">
-
-                    <span class="detail-label">
-                        Account Type
-                    </span>
-
-
-                    <span class="detail-value">
-
-                        <?= htmlspecialchars(
-                            $accountType,
-                            ENT_QUOTES,
+</html>
