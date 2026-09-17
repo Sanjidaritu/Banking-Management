@@ -8,11 +8,10 @@ require_once __DIR__ . '/config.php';
 
 
 // ======================================================
-// CHECK LOGIN SESSION
+// CHECK LOGIN
 // ======================================================
 
 if (!isset($_SESSION['customer_id'])) {
-
     header('Location: login.html');
     exit;
 }
@@ -21,18 +20,20 @@ $customerId = (int) $_SESSION['customer_id'];
 
 
 // ======================================================
-// GET CUSTOMER INFORMATION
+// GET CUSTOMER + ACCOUNT BALANCE
 // ======================================================
 
 try {
 
     $stmt = $pdo->prepare("
         SELECT
-            id,
-            account_number,
-            balance
-        FROM customers
-        WHERE id = :customer_id
+            c.id,
+            c.account_number,
+            a.balance
+        FROM customers c
+        LEFT JOIN accounts a
+            ON a.customer_id = c.id
+        WHERE c.id = :customer_id
         LIMIT 1
     ");
 
@@ -43,12 +44,6 @@ try {
     $customer = $stmt->fetch();
 
 } catch (Throwable $e) {
-
-    /*
-     * TEMPORARY DEBUG MESSAGE
-     *
-     * This shows the real MySQL error.
-     */
 
     http_response_code(500);
 
@@ -106,7 +101,7 @@ try {
             <h1>Dashboard Database Error</h1>
 
             <p>
-                The dashboard could not read the customer account.
+                The dashboard could not read the account.
             </p>
 
             <pre>' .
@@ -136,78 +131,13 @@ try {
 
 if (!$customer) {
 
-    http_response_code(404);
+    die('Customer account not found.');
 
-    echo '<!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Account Not Found</title>
-
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background: #f5f5f5;
-                padding: 40px;
-            }
-
-            .box {
-                max-width: 700px;
-                margin: auto;
-                background: white;
-                padding: 30px;
-                border-radius: 12px;
-                box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            }
-
-            a {
-                display: inline-block;
-                margin-top: 20px;
-                padding: 10px 18px;
-                background: #222;
-                color: white;
-                text-decoration: none;
-                border-radius: 6px;
-            }
-        </style>
-
-    </head>
-
-    <body>
-
-        <div class="box">
-
-            <h1>Account Not Found</h1>
-
-            <p>
-                No customer was found for customer ID:
-            </p>
-
-            <strong>' .
-                htmlspecialchars(
-                    (string)$customerId,
-                    ENT_QUOTES,
-                    'UTF-8'
-                )
-            . '</strong>
-
-            <br>
-
-            <a href="login.html">
-                Back to Login
-            </a>
-
-        </div>
-
-    </body>
-    </html>';
-
-    exit;
 }
 
 
 // ======================================================
-// CUSTOMER DATA
+// GET VALUES
 // ======================================================
 
 $username = (string)(
@@ -240,7 +170,7 @@ if (strlen($accountNumber) > 4) {
 
 
 // ======================================================
-// ESCAPE USERNAME
+// SAFE OUTPUT
 // ======================================================
 
 $safeUsername = htmlspecialchars(
@@ -270,10 +200,7 @@ $safeAccount = htmlspecialchars(
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Upright Bank Dashboard
-    </title>
-
+    <title>Upright Bank Dashboard</title>
 
     <style>
 
@@ -281,131 +208,59 @@ $safeAccount = htmlspecialchars(
             box-sizing: border-box;
         }
 
-
         body {
-
             margin: 0;
-
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-
+            font-family: Arial, Helvetica, sans-serif;
             background: #f4f7fb;
-
             color: #222;
         }
 
-
-        /* ==========================================
-           HEADER
-        ========================================== */
-
         .header {
-
             background: #ffffff;
-
             padding: 20px 40px;
-
-            border-bottom:
-                1px solid #e2e2e2;
+            border-bottom: 1px solid #ddd;
 
             display: flex;
-
-            justify-content:
-                space-between;
-
             align-items: center;
+            justify-content: space-between;
         }
 
-
         .logo {
-
             font-size: 25px;
-
             font-weight: 700;
         }
 
-
         .logout {
-
-            display: inline-block;
-
             background: #222;
-
-            color: #ffffff;
-
+            color: #fff;
             text-decoration: none;
-
             padding: 11px 20px;
-
             border-radius: 7px;
-
-            font-size: 14px;
         }
-
-
-        .logout:hover {
-
-            opacity: 0.85;
-        }
-
-
-        /* ==========================================
-           MAIN
-        ========================================== */
 
         .container {
-
             max-width: 1000px;
-
-            margin:
-                50px auto;
-
-            padding:
-                0 20px;
+            margin: 50px auto;
+            padding: 20px;
         }
 
-
-        /* ==========================================
-           WELCOME
-        ========================================== */
-
         .welcome {
-
             margin-bottom: 30px;
         }
 
-
         .welcome h1 {
-
-            margin:
-                0 0 8px;
-
+            margin: 0 0 8px;
             font-size: 32px;
         }
 
-
         .welcome p {
-
             margin: 0;
-
             color: #666;
-
-            font-size: 16px;
         }
 
-
-        /* ==========================================
-           ACCOUNT CARD
-        ========================================== */
-
         .account-card {
-
-            background: #ffffff;
-
+            background: #fff;
             border-radius: 15px;
-
             padding: 35px;
 
             box-shadow:
@@ -413,101 +268,58 @@ $safeAccount = htmlspecialchars(
                 rgba(0, 0, 0, 0.08);
         }
 
-
-        .section-title {
-
+        .label {
             color: #777;
-
             font-size: 14px;
-
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
-
         .account-number {
-
             font-size: 22px;
-
             font-weight: 600;
-
             margin-bottom: 35px;
         }
 
-
-        /* ==========================================
-           BALANCE
-        ========================================== */
-
         .balance-title {
-
             color: #777;
-
             font-size: 15px;
-
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
-
 
         .balance {
-
             font-size: 46px;
-
             font-weight: 700;
-
-            letter-spacing: -1px;
         }
-
 
         .balance-description {
-
             margin-top: 10px;
-
             color: #777;
-
             font-size: 13px;
         }
-
-
-        /* ==========================================
-           MOBILE
-        ========================================== */
 
         @media (max-width: 600px) {
 
             .header {
-
-                padding:
-                    18px 20px;
+                padding: 18px 20px;
             }
 
-
             .logo {
-
                 font-size: 21px;
             }
 
-
             .container {
-
-                margin-top:
-                    30px;
+                margin-top: 30px;
             }
 
-
             .welcome h1 {
-
                 font-size: 26px;
             }
 
-
             .account-card {
-
                 padding: 25px;
             }
 
-
             .balance {
-
                 font-size: 36px;
             }
 
@@ -517,117 +329,74 @@ $safeAccount = htmlspecialchars(
 
 </head>
 
-
 <body>
-
-
-<!-- ==================================================
-     HEADER
-================================================== -->
 
 <header class="header">
 
     <div class="logo">
-
         Upright Bank
-
     </div>
-
 
     <a
         href="logout.php"
         class="logout"
     >
-
         Logout
-
     </a>
 
 </header>
 
 
-<!-- ==================================================
-     MAIN CONTENT
-================================================== -->
-
 <main class="container">
-
 
     <div class="welcome">
 
         <h1>
-
             Online Banking Dashboard
-
         </h1>
 
-
         <p>
-
             Welcome,
             <?php echo $safeUsername; ?>
-
         </p>
 
     </div>
 
 
-    <!-- ==============================================
-         ACCOUNT
-    =============================================== -->
-
     <div class="account-card">
 
-
-        <div class="section-title">
-
+        <div class="label">
             My Account
-
         </div>
 
-
         <div class="account-number">
-
             <?php echo $safeAccount; ?>
-
         </div>
 
 
         <div class="balance-title">
-
             Available Balance
-
         </div>
-
 
         <div class="balance">
 
             $
-
             <?php
-
             echo number_format(
                 $balance,
                 2
             );
-
             ?>
 
         </div>
 
-
         <div class="balance-description">
-
             Current account balance
-
         </div>
-
 
     </div>
 
-
 </main>
-
 
 </body>
 
