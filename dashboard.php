@@ -1,181 +1,125 @@
 <?php
+
+declare(strict_types=1);
+
 session_start();
+
+require_once __DIR__ . '/config.php';
 
 /*
 ========================================================
-UPRIGHT BANK - DASHBOARD
-Reads account balance directly from MySQL
+UPRIGHT BANK - ONLINE BANKING DASHBOARD
 ========================================================
 */
 
+
 // ======================================================
-// DATABASE CONFIGURATION
+// CHECK LOGIN SESSION
 // ======================================================
 
-// Railway environment variables
-$dbHost = getenv("MYSQLHOST");
-$dbPort = getenv("MYSQLPORT");
-$dbName = getenv("MYSQLDATABASE");
-$dbUser = getenv("MYSQLUSER");
-$dbPass = getenv("MYSQLPASSWORD");
+if (!isset($_SESSION['customer_id'])) {
+    header('Location: login.html');
+    exit;
+}
 
-// Fallback values if needed
-if (!$dbHost) $dbHost = getenv("DB_HOST");
-if (!$dbPort) $dbPort = getenv("DB_PORT");
-if (!$dbName) $dbName = getenv("DB_NAME");
-if (!$dbUser) $dbUser = getenv("DB_USER");
-if (!$dbPass) $dbPass = getenv("DB_PASSWORD");
+$customerId = (int) $_SESSION['customer_id'];
 
 
 // ======================================================
-// CONNECT TO DATABASE
+// GET CUSTOMER ACCOUNT INFORMATION
 // ======================================================
 
 try {
 
-    $pdo = new PDO(
-        "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4",
-        $dbUser,
-        $dbPass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]
+    $stmt = $pdo->prepare("
+        SELECT
+            id,
+            account_number,
+            balance
+        FROM customers
+        WHERE id = :customer_id
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        ':customer_id' => $customerId
+    ]);
+
+    $customer = $stmt->fetch();
+
+} catch (Throwable $e) {
+
+    error_log(
+        'Dashboard query failed: ' . $e->getMessage()
     );
 
-} catch (PDOException $e) {
-
-    die("Database connection failed.");
+    $customer = false;
 }
 
 
 // ======================================================
-// GET LOGGED-IN CUSTOMER
-// ======================================================
-
-$customer = null;
-
-/*
-If your PHP login session contains customer_id,
-this will use it.
-*/
-if (isset($_SESSION["customer_id"])) {
-
-    $customerId = $_SESSION["customer_id"];
-
-    $stmt = $pdo->prepare("
-        SELECT
-            id,
-            account_number,
-            balance
-        FROM customers
-        WHERE id = ?
-        LIMIT 1
-    ");
-
-    $stmt->execute([$customerId]);
-
-    $customer = $stmt->fetch();
-}
-
-
-/*
-If your session contains account_number instead,
-this will use that.
-*/
-if (!$customer && isset($_SESSION["account_number"])) {
-
-    $accountNumber = $_SESSION["account_number"];
-
-    $stmt = $pdo->prepare("
-        SELECT
-            id,
-            account_number,
-            balance
-        FROM customers
-        WHERE account_number = ?
-        LIMIT 1
-    ");
-
-    $stmt->execute([$accountNumber]);
-
-    $customer = $stmt->fetch();
-}
-
-
-// ======================================================
-// NO SESSION
+// CUSTOMER NOT FOUND
 // ======================================================
 
 if (!$customer) {
 
-    /*
-    For testing only, you can temporarily use an
-    account number here.
-
-    Example:
-
-    $testAccount = "9001002005";
-
-    Then uncomment the block below.
-    */
-
-    /*
-    $testAccount = "9001002005";
-
-    $stmt = $pdo->prepare("
-        SELECT
-            id,
-            account_number,
-            balance
-        FROM customers
-        WHERE account_number = ?
-        LIMIT 1
-    ");
-
-    $stmt->execute([$testAccount]);
-
-    $customer = $stmt->fetch();
-    */
-}
-
-
-// ======================================================
-// DISPLAY VALUES
-// ======================================================
-
-if ($customer) {
-
-    $accountNumber = $customer["account_number"];
-
-    $balance = (float)$customer["balance"];
-
-    // Mask account number
-    if (strlen($accountNumber) > 4) {
-        $maskedAccount =
-            "••••" . substr($accountNumber, -4);
-    } else {
-        $maskedAccount = $accountNumber;
-    }
+    $accountNumber = 'N/A';
+    $balance = 0;
 
 } else {
 
-    $accountNumber = "";
-    $maskedAccount = "";
-    $balance = 0;
+    $accountNumber =
+        (string)($customer['account_number'] ?? 'N/A');
+
+    $balance =
+        (float)($customer['balance'] ?? 0);
+
 }
+
+
+// ======================================================
+// MASK ACCOUNT NUMBER
+// ======================================================
+
+if (
+    $accountNumber !== 'N/A' &&
+    strlen($accountNumber) > 4
+) {
+
+    $maskedAccount =
+        '••••' . substr($accountNumber, -4);
+
+} else {
+
+    $maskedAccount = $accountNumber;
+}
+
+
+// ======================================================
+// USERNAME
+// ======================================================
+
+$username =
+    htmlspecialchars(
+        (string)($_SESSION['username'] ?? ''),
+        ENT_QUOTES,
+        'UTF-8'
+    );
 
 ?>
 
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Upright Bank Dashboard</title>
 
@@ -187,174 +131,340 @@ if ($customer) {
 
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
             background: #f4f7fb;
             color: #222;
         }
 
+        /* =============================================
+           HEADER
+        ============================================= */
+
         .header {
+            width: 100%;
             background: #ffffff;
-            border-bottom: 1px solid #ddd;
+
             padding: 20px 40px;
+
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+
+            border-bottom: 1px solid #e5e5e5;
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-
-        .title {
-            margin-bottom: 30px;
-        }
-
-        .title h1 {
-            margin: 0 0 8px;
-            font-size: 30px;
-        }
-
-        .title p {
-            margin: 0;
-            color: #666;
-        }
-
-        .account-card {
-            background: white;
-            border-radius: 14px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
-        }
-
-        .account-label {
-            color: #777;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .account-number {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 30px;
-        }
-
-        .balance-label {
-            color: #777;
-            font-size: 15px;
-            margin-bottom: 8px;
-        }
-
-        .balance {
-            font-size: 42px;
-            font-weight: bold;
+            font-size: 25px;
+            font-weight: 700;
         }
 
         .logout {
             display: inline-block;
+
             padding: 11px 20px;
+
             background: #222;
-            color: white;
+            color: #ffffff;
+
             text-decoration: none;
+
             border-radius: 7px;
+
+            font-size: 14px;
         }
 
         .logout:hover {
             opacity: 0.85;
         }
 
+
+        /* =============================================
+           MAIN CONTAINER
+        ============================================= */
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+
+            margin: 45px auto;
+
+            padding: 0 20px;
+        }
+
+
+        /* =============================================
+           WELCOME
+        ============================================= */
+
+        .welcome {
+            margin-bottom: 30px;
+        }
+
+        .welcome h1 {
+            margin: 0 0 8px;
+
+            font-size: 32px;
+        }
+
+        .welcome p {
+            margin: 0;
+
+            color: #666;
+
+            font-size: 16px;
+        }
+
+
+        /* =============================================
+           ACCOUNT CARD
+        ============================================= */
+
+        .account-card {
+
+            background: #ffffff;
+
+            border-radius: 15px;
+
+            padding: 32px;
+
+            box-shadow:
+                0 5px 25px
+                rgba(0, 0, 0, 0.08);
+        }
+
+
+        /* =============================================
+           ACCOUNT NUMBER
+        ============================================= */
+
+        .account-title {
+
+            color: #777;
+
+            font-size: 14px;
+
+            margin-bottom: 8px;
+        }
+
+        .account-number {
+
+            font-size: 22px;
+
+            font-weight: 600;
+
+            margin-bottom: 35px;
+        }
+
+
+        /* =============================================
+           BALANCE
+        ============================================= */
+
+        .balance-title {
+
+            color: #777;
+
+            font-size: 15px;
+
+            margin-bottom: 8px;
+        }
+
+        .balance {
+
+            font-size: 44px;
+
+            font-weight: 700;
+
+            margin-bottom: 10px;
+        }
+
+        .balance-note {
+
+            color: #777;
+
+            font-size: 13px;
+        }
+
+
+        /* =============================================
+           ERROR
+        ============================================= */
+
         .error {
-            background: #fff0f0;
+
+            background: #fff1f1;
+
+            border: 1px solid #ffd0d0;
+
             color: #b00020;
+
             padding: 20px;
+
             border-radius: 10px;
+        }
+
+
+        /* =============================================
+           MOBILE
+        ============================================= */
+
+        @media (max-width: 600px) {
+
+            .header {
+                padding: 18px 20px;
+            }
+
+            .logo {
+                font-size: 21px;
+            }
+
+            .container {
+                margin-top: 30px;
+            }
+
+            .welcome h1 {
+                font-size: 26px;
+            }
+
+            .account-card {
+                padding: 25px;
+            }
+
+            .balance {
+                font-size: 36px;
+            }
+
         }
 
     </style>
 
 </head>
 
+
 <body>
 
-    <div class="header">
 
-        <div class="logo">
-            Upright Bank
-        </div>
+<!-- ==================================================
+     HEADER
+=================================================== -->
 
-        <a href="login.html" class="logout">
-            Logout
-        </a>
+<header class="header">
+
+    <div class="logo">
+        Upright Bank
+    </div>
+
+    <a
+        href="logout.php"
+        class="logout"
+    >
+        Logout
+    </a>
+
+</header>
+
+
+<!-- ==================================================
+     MAIN
+=================================================== -->
+
+<main class="container">
+
+
+    <!-- WELCOME -->
+
+    <div class="welcome">
+
+        <h1>
+            Online Banking Dashboard
+        </h1>
+
+        <p>
+            Welcome,
+            <?php echo $username; ?>
+        </p>
 
     </div>
 
 
-    <div class="container">
+    <?php if ($customer): ?>
 
-        <div class="title">
 
-            <h1>Online Banking Dashboard</h1>
+        <!-- ==========================================
+             ACCOUNT CARD
+        =========================================== -->
 
-            <p>
-                Welcome to your Upright Bank account.
-            </p>
+        <div class="account-card">
+
+
+            <!-- ACCOUNT NUMBER -->
+
+            <div class="account-title">
+                My Account
+            </div>
+
+            <div class="account-number">
+
+                <?php
+                echo htmlspecialchars(
+                    $maskedAccount,
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
+                ?>
+
+            </div>
+
+
+            <!-- BALANCE -->
+
+            <div class="balance-title">
+                Available Balance
+            </div>
+
+            <div class="balance">
+
+                $
+                <?php
+                echo number_format(
+                    $balance,
+                    2
+                );
+                ?>
+
+            </div>
+
+            <div class="balance-note">
+                Current account balance
+            </div>
+
 
         </div>
 
 
-        <?php if ($customer): ?>
-
-            <div class="account-card">
-
-                <div class="account-label">
-                    Account Number
-                </div>
-
-                <div class="account-number">
-                    <?php
-                    echo htmlspecialchars($maskedAccount);
-                    ?>
-                </div>
+    <?php else: ?>
 
 
-                <div class="balance-label">
-                    Available Balance
-                </div>
+        <!-- ==========================================
+             CUSTOMER NOT FOUND
+        =========================================== -->
 
-                <div class="balance">
+        <div class="error">
 
-                    $
-                    <?php
-                    echo number_format($balance, 2);
-                    ?>
+            Account information could not be found.
 
-                </div>
+        </div>
 
-            </div>
 
-        <?php else: ?>
+    <?php endif; ?>
 
-            <div class="error">
 
-                No account information was found.
+</main>
 
-                <br><br>
-
-                This usually means the PHP page does not have
-                the login session/customer ID.
-
-            </div>
-
-        <?php endif; ?>
-
-    </div>
 
 </body>
 
