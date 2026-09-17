@@ -1,5 +1,8 @@
 <?php
 
+echo "NEW DASHBOARD PHP IS RUNNING";
+exit;
+
 declare(strict_types=1);
 
 session_start();
