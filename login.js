@@ -67,7 +67,7 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
          * Login successful
          */
 
-        window.location.href = "dashboard.php";
+        window.location.href = "dashboard.html";
 
     } catch (err) {
 
