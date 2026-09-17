@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", loadDashboard);
 
+
 async function loadDashboard() {
 
     const errorMessage =
@@ -7,34 +8,48 @@ async function loadDashboard() {
 
     try {
 
-        const response = await fetch(
-            "https://banking-management-production.up.railway.app/api/dashboard",
-            {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
-                }
-            }
-        );
+        const response = await fetch("dashboard.php", {
 
-        const contentType =
-            response.headers.get("content-type") || "";
+            method: "GET",
+
+            credentials: "include",
+
+            headers: {
+                "Accept": "application/json"
+            }
+
+        });
+
 
         const text = await response.text();
 
-        console.log("Dashboard response:", text);
+        let data;
 
-        if (!contentType.includes("application/json")) {
+        try {
+
+            data = JSON.parse(text);
+
+        } catch (error) {
+
+            console.error(
+                "Invalid dashboard response:",
+                text
+            );
 
             throw new Error(
-                "The Railway dashboard API returned HTML instead of JSON."
+                "Dashboard returned an invalid response."
             );
         }
 
-        const data = JSON.parse(text);
 
         if (!response.ok || !data.success) {
+
+            if (response.status === 401) {
+
+                window.location.href = "login.html";
+                return;
+
+            }
 
             throw new Error(
                 data.message ||
@@ -42,65 +57,131 @@ async function loadDashboard() {
             );
         }
 
-        // Username
-        const username =
+
+        // ==================================================
+        // USERNAME
+        // ==================================================
+
+        const usernameElement =
             document.getElementById("username");
 
-        if (username) {
-            username.textContent =
+        if (usernameElement) {
+
+            usernameElement.textContent =
                 data.username || "";
+
         }
 
-        // Account number
-        const accountNumber =
+
+        // ==================================================
+        // CUSTOMER NAME
+        // ==================================================
+
+        const customerNameElement =
+            document.getElementById("customerName");
+
+        if (
+            customerNameElement &&
+            data.customer
+        ) {
+
+            customerNameElement.textContent =
+                `${data.customer.first_name} ${data.customer.last_name}`;
+
+        }
+
+
+        // ==================================================
+        // ACCOUNT NUMBER
+        // ==================================================
+
+        const accountNumberElement =
             document.getElementById("accountNumber");
 
-        if (accountNumber && data.account) {
+        if (
+            accountNumberElement &&
+            data.account
+        ) {
 
-            const number =
+            const accountNumber =
                 String(
                     data.account.account_number || ""
                 );
 
-            accountNumber.textContent =
-                number.length >= 4
-                    ? "•••• " + number.slice(-4)
-                    : number;
+
+            if (accountNumber.length >= 4) {
+
+                accountNumberElement.textContent =
+                    "•••• " +
+                    accountNumber.slice(-4);
+
+            } else {
+
+                accountNumberElement.textContent =
+                    accountNumber;
+
+            }
+
         }
 
-        // Account type
-        const accountType =
+
+        // ==================================================
+        // ACCOUNT TYPE
+        // ==================================================
+
+        const accountTypeElement =
             document.getElementById("accountType");
 
-        if (accountType && data.account) {
+        if (
+            accountTypeElement &&
+            data.account
+        ) {
 
-            accountType.textContent =
+            accountTypeElement.textContent =
                 data.account.account_type || "";
+
         }
 
-        // Current balance
-        const currentBalance =
+
+        // ==================================================
+        // CURRENT BALANCE
+        // ==================================================
+
+        const currentBalanceElement =
             document.getElementById("currentBalance");
 
-        if (currentBalance && data.account) {
+        if (
+            currentBalanceElement &&
+            data.account
+        ) {
 
-            currentBalance.textContent =
+            currentBalanceElement.textContent =
                 formatMoney(
                     data.account.current_balance
                 );
+
         }
 
-        // Available balance
-        const availableBalance =
+
+        // ==================================================
+        // AVAILABLE BALANCE
+        // ==================================================
+
+        const availableBalanceElement =
             document.getElementById("availableBalance");
 
-        if (availableBalance && data.account) {
+        if (
+            availableBalanceElement &&
+            data.account
+        ) {
 
-            availableBalance.textContent =
+            availableBalanceElement.textContent =
                 formatMoney(
                     data.account.available_balance
                 );
+
         }
+
 
     } catch (error) {
 
@@ -109,24 +190,34 @@ async function loadDashboard() {
             error
         );
 
+
         if (errorMessage) {
 
             errorMessage.textContent =
                 error.message ||
-                "Unable to load dashboard.";
+                "Unable to load account information.";
 
             errorMessage.style.display = "block";
+
         }
+
     }
+
 }
 
+
+// ======================================================
+// FORMAT MONEY
+// ======================================================
 
 function formatMoney(value) {
 
     const amount = Number(value);
 
     if (Number.isNaN(amount)) {
+
         return "$0.00";
+
     }
 
     return amount.toLocaleString(
@@ -139,34 +230,36 @@ function formatMoney(value) {
 }
 
 
+// ======================================================
+// LOGOUT
+// ======================================================
+
 async function logout() {
 
     try {
 
         const response = await fetch(
-            "https://banking-management-production.up.railway.app/api/logout",
+            "logout.php",
             {
                 method: "POST",
-                credentials: "include",
-                headers: {
-                    "Accept": "application/json"
-                }
+                credentials: "include"
             }
         );
 
-        const data = await response.json();
 
-        if (data.success) {
+        if (response.ok) {
 
-            window.location.href = "login.html";
+            window.location.href =
+                "login.html";
 
-        } else {
+            return;
 
-            alert(
-                data.message ||
-                "Logout failed."
-            );
         }
+
+
+        window.location.href =
+            "login.html";
+
 
     } catch (error) {
 
@@ -175,8 +268,8 @@ async function logout() {
             error
         );
 
-        alert(
-            "Unable to connect to logout service."
-        );
+        window.location.href =
+            "login.html";
     }
+
 }
