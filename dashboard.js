@@ -1,28 +1,39 @@
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", loadDashboard);
 
-    const loadingMessage =
-        document.getElementById("loadingMessage");
+async function loadDashboard() {
 
-    const dashboardContent =
-        document.getElementById("dashboardContent");
-
-    const errorMessage =
-        document.getElementById("errorMessage");
-
+    const errorMessage = document.getElementById("errorMessage");
+    const dashboardContent = document.getElementById("dashboardContent");
 
     try {
 
-        const response = await fetch(
-            "/api/dashboard",
-            {
-                method: "GET",
-                credentials: "include"
+        const response = await fetch("/api/dashboard", {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                "Accept": "application/json"
             }
-        );
+        });
 
+        const contentType =
+            response.headers.get("content-type") || "";
 
-        const data = await response.json();
+        const text = await response.text();
 
+        // Make sure the server actually returned JSON
+        if (!contentType.includes("application/json")) {
+
+            console.error(
+                "Dashboard returned non-JSON:",
+                text
+            );
+
+            throw new Error(
+                "Dashboard server returned an HTML page instead of JSON."
+            );
+        }
+
+        const data = JSON.parse(text);
 
         if (!response.ok || !data.success) {
 
@@ -30,104 +41,76 @@ document.addEventListener("DOMContentLoaded", async function () {
                 data.message ||
                 "Unable to load dashboard."
             );
-
         }
 
+        // Username
+        const usernameElement =
+            document.getElementById("username");
 
-        /*
-        ----------------------------------------------
-        ACCOUNT DATA FROM BACKEND
-        ----------------------------------------------
-        */
+        if (usernameElement) {
+            usernameElement.textContent =
+                data.username || "";
+        }
 
-        const account = data.account;
+        // Account number
+        const accountNumberElement =
+            document.getElementById("accountNumber");
 
+        if (accountNumberElement && data.account) {
 
-        /*
-        ----------------------------------------------
-        CUSTOMER NAME
-        ----------------------------------------------
-        */
+            const accountNumber =
+                String(data.account.account_number || "");
 
-        /*
-        Your current /api/dashboard route does not
-        return first_name/last_name.
+            if (accountNumber.length >= 4) {
 
-        So the account information available from
-        your existing backend is displayed below.
-        */
+                accountNumberElement.textContent =
+                    "•••• " +
+                    accountNumber.slice(-4);
 
+            } else {
 
-        document.getElementById("username").textContent =
-            data.username || "-";
+                accountNumberElement.textContent =
+                    accountNumber;
+            }
+        }
 
+        // Account type
+        const accountTypeElement =
+            document.getElementById("accountType");
 
-        /*
-        ----------------------------------------------
-        ACCOUNT NUMBER
-        ----------------------------------------------
-        */
+        if (accountTypeElement && data.account) {
 
-        const accountNumber =
-            String(account.account_number || "");
+            accountTypeElement.textContent =
+                data.account.account_type || "";
+        }
 
-        const lastFour =
-            accountNumber.slice(-4);
+        // Current balance
+        const currentBalanceElement =
+            document.getElementById("currentBalance");
 
-        document.getElementById("accountNumber").textContent =
-            lastFour
-                ? "••••" + lastFour
-                : "-";
+        if (currentBalanceElement && data.account) {
 
+            currentBalanceElement.textContent =
+                formatMoney(
+                    data.account.current_balance
+                );
+        }
 
-        /*
-        ----------------------------------------------
-        ACCOUNT TYPE
-        ----------------------------------------------
-        */
+        // Available balance
+        const availableBalanceElement =
+            document.getElementById("availableBalance");
 
-        document.getElementById("accountType").textContent =
-            account.account_type || "-";
+        if (availableBalanceElement && data.account) {
 
+            availableBalanceElement.textContent =
+                formatMoney(
+                    data.account.available_balance
+                );
+        }
 
-        /*
-        ----------------------------------------------
-        BALANCES
-        ----------------------------------------------
-        */
-
-        document.getElementById("currentBalance").textContent =
-            formatMoney(account.current_balance);
-
-
-        document.getElementById("availableBalance").textContent =
-            formatMoney(account.available_balance);
-
-
-        /*
-        ----------------------------------------------
-        CUSTOMER NAME
-        ----------------------------------------------
-        */
-
-        document.getElementById("welcomeName").textContent =
-            "Welcome";
-
-
-        document.getElementById("customerName").textContent =
-            "-";
-
-
-        /*
-        ----------------------------------------------
-        SHOW DASHBOARD
-        ----------------------------------------------
-        */
-
-        loadingMessage.style.display = "none";
-
-        dashboardContent.style.display = "block";
-
+        if (dashboardContent) {
+            dashboardContent.style.display = "block";
+        }
 
     } catch (error) {
 
@@ -136,79 +119,72 @@ document.addEventListener("DOMContentLoaded", async function () {
             error
         );
 
+        if (errorMessage) {
 
-        loadingMessage.style.display = "none";
+            errorMessage.textContent =
+                error.message ||
+                "Unable to load dashboard.";
 
-        errorMessage.textContent =
-            error.message ||
-            "Unable to load your account.";
+            errorMessage.style.display = "block";
+        }
+    }
+}
 
-        errorMessage.style.display = "block";
 
+function formatMoney(value) {
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+        return "$0.00";
     }
 
+    return number.toLocaleString(
+        "en-US",
+        {
+            style: "currency",
+            currency: "USD"
+        }
+    );
+}
 
-    /*
-    ----------------------------------------------
-    FORMAT MONEY
-    ----------------------------------------------
-    */
 
-    function formatMoney(amount) {
+async function logout() {
 
-        const number =
-            Number(amount);
+    try {
 
-        if (Number.isNaN(number)) {
-            return "$0.00";
+        const response = await fetch("/api/logout", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            window.location.href = "login.html";
+
+        } else {
+
+            alert(
+                data.message ||
+                "Logout failed."
+            );
         }
 
-        return new Intl.NumberFormat(
-            "en-US",
-            {
-                style: "currency",
-                currency: "USD"
-            }
-        ).format(number);
+    } catch (error) {
 
-    }
-
-
-    /*
-    ----------------------------------------------
-    LOGOUT
-    ----------------------------------------------
-    */
-
-    document
-        .getElementById("logoutButton")
-        .addEventListener(
-            "click",
-            async function () {
-
-                try {
-
-                    await fetch(
-                        "/api/logout",
-                        {
-                            method: "POST",
-                            credentials: "include"
-                        }
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Logout error:",
-                        error
-                    );
-
-                }
-
-                window.location.href =
-                    "login.html";
-
-            }
+        console.error(
+            "Logout error:",
+            error
         );
 
-});
+        alert(
+            "Unable to logout."
+        );
+    }
+}
+
