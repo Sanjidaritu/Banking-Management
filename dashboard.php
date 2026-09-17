@@ -2,9 +2,6 @@
 
 declare(strict_types=1);
 
-echo "NEW DASHBOARD PHP IS RUNNING";
-exit;
-
 session_start();
 
 require_once __DIR__ . '/config.php';
