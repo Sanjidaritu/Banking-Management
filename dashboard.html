@@ -25,6 +25,10 @@
             color: #1f2937;
         }
 
+        /* =====================================================
+           TOP BAR
+           ===================================================== */
+
         .topbar {
             background: #123c69;
             color: white;
@@ -53,11 +57,19 @@
             background: #eaf0f7;
         }
 
+        /* =====================================================
+           MAIN CONTAINER
+           ===================================================== */
+
         .container {
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 40px auto;
             padding: 0 20px;
         }
+
+        /* =====================================================
+           WELCOME
+           ===================================================== */
 
         .welcome {
             margin-bottom: 30px;
@@ -73,6 +85,10 @@
             margin: 0;
             color: #6b7280;
         }
+
+        /* =====================================================
+           BALANCE
+           ===================================================== */
 
         .balance-grid {
             display: grid;
@@ -100,11 +116,16 @@
             font-weight: bold;
         }
 
+        /* =====================================================
+           ACCOUNT INFORMATION
+           ===================================================== */
+
         .account-card {
             background: white;
             padding: 28px;
             border-radius: 10px;
             box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
         }
 
         .account-card h2 {
@@ -140,6 +161,195 @@
             font-size: 13px;
         }
 
+        /* =====================================================
+           TRANSACTION HISTORY
+           ===================================================== */
+
+        .transaction-card {
+            background: white;
+            padding: 34px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .transaction-header {
+            margin-bottom: 25px;
+        }
+
+        .transaction-header h2 {
+            margin: 0 0 8px;
+            color: #123c69;
+            font-size: 30px;
+        }
+
+        .transaction-header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        /* =====================================================
+           TRANSACTION FILTERS
+           ===================================================== */
+
+        .transaction-filters {
+            display: grid;
+            grid-template-columns: minmax(250px, 1fr) 235px 235px 165px;
+            gap: 28px;
+            align-items: end;
+            margin-bottom: 30px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            color: #52627a;
+            font-size: 16px;
+            margin-bottom: 7px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            height: 56px;
+            border: 1px solid #d5dce5;
+            border-radius: 9px;
+            background: white;
+            padding: 0 16px;
+            font-size: 17px;
+            color: #172b4d;
+            outline: none;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: #1769c2;
+            box-shadow: 0 0 0 2px rgba(23, 105, 194, 0.08);
+        }
+
+        .search-button {
+            height: 56px;
+            border: none;
+            border-radius: 9px;
+            background: #1765b8;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .search-button:hover {
+            background: #12549b;
+        }
+
+        /* =====================================================
+           TRANSACTION TABLE
+           ===================================================== */
+
+        .transaction-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e1e6ec;
+            border-radius: 9px;
+        }
+
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        .transaction-table th {
+            background: #f3f6f9;
+            color: #172b4d;
+            text-align: left;
+            padding: 17px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #dfe5eb;
+        }
+
+        .transaction-table td {
+            padding: 17px 24px;
+            border-bottom: 1px solid #e5e9ee;
+            font-size: 16px;
+            color: #172b4d;
+        }
+
+        .transaction-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .transaction-table tbody tr:hover {
+            background: #fafcff;
+        }
+
+        .amount-cell,
+        .balance-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .type-cell {
+            white-space: nowrap;
+        }
+
+        /* =====================================================
+           CREDIT / DEBIT BADGES
+           ===================================================== */
+
+        .transaction-badge {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .credit-badge {
+            color: #16833b;
+            background: #dff4e3;
+        }
+
+        .debit-badge {
+            color: #dc2626;
+            background: #fee1e1;
+        }
+
+        .credit-amount {
+            color: #168b3d;
+            font-weight: bold;
+        }
+
+        .debit-amount {
+            color: #ef1717;
+            font-weight: bold;
+        }
+
+        /* =====================================================
+           TRANSACTION LOADING / EMPTY
+           ===================================================== */
+
+        .transaction-loading {
+            text-align: center;
+            padding: 35px;
+            color: #6b7280;
+        }
+
+        .no-transactions {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            display: none;
+        }
+
+        /* =====================================================
+           ERROR
+           ===================================================== */
+
         .error {
             display: none;
             background: #fee2e2;
@@ -155,12 +365,33 @@
             color: #6b7280;
         }
 
+        /* =====================================================
+           FOOTER
+           ===================================================== */
+
         .footer {
             text-align: center;
             color: #9ca3af;
             margin-top: 35px;
             padding-bottom: 30px;
             font-size: 13px;
+        }
+
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .transaction-filters {
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+            }
+
+            .search-button {
+                width: 100%;
+            }
+
         }
 
         @media (max-width: 700px) {
@@ -192,6 +423,19 @@
 
             .value {
                 max-width: 55%;
+            }
+
+            .transaction-card {
+                padding: 20px 15px;
+            }
+
+            .transaction-header h2 {
+                font-size: 25px;
+            }
+
+            .transaction-filters {
+                grid-template-columns: 1fr;
+                gap: 15px;
             }
 
         }
@@ -240,6 +484,10 @@
             style="display: none;"
         >
 
+            <!-- =================================================
+                 WELCOME
+                 ================================================= -->
+
             <section class="welcome">
 
                 <h1 id="welcomeName">
@@ -252,6 +500,10 @@
 
             </section>
 
+
+            <!-- =================================================
+                 BALANCE
+                 ================================================= -->
 
             <section class="balance-grid">
 
@@ -288,6 +540,10 @@
 
             </section>
 
+
+            <!-- =================================================
+                 ACCOUNT INFORMATION
+                 ================================================= -->
 
             <section class="account-card">
 
@@ -377,6 +633,146 @@
 
                     </div>
 
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 TRANSACTION HISTORY
+                 ================================================= -->
+
+            <section class="transaction-card">
+
+                <div class="transaction-header">
+
+                    <h2>
+                        Transaction History
+                    </h2>
+
+                    <p>
+                        View your recent account transactions.
+                    </p>
+
+                </div>
+
+
+                <!-- FILTERS -->
+
+                <div class="transaction-filters">
+
+                    <div class="filter-group">
+
+                        <label for="transactionAccount">
+                            Account
+                        </label>
+
+                        <select id="transactionAccount">
+                            <option value="">
+                                Checking
+                            </option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="filter-group">
+
+                        <label for="fromDate">
+                            From Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="fromDate"
+                            value="2025-08-01"
+                        >
+
+                    </div>
+
+
+                    <div class="filter-group">
+
+                        <label for="toDate">
+                            To Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="toDate"
+                            value="2025-09-16"
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="search-button"
+                        id="transactionSearchButton"
+                    >
+                        Search
+                    </button>
+
+                </div>
+
+
+                <!-- TABLE -->
+
+                <div
+                    id="transactionLoading"
+                    class="transaction-loading"
+                    style="display: none;"
+                >
+                    Loading transactions...
+                </div>
+
+
+                <div class="transaction-table-wrapper">
+
+                    <table class="transaction-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Description
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th class="amount-cell">
+                                    Amount
+                                </th>
+
+                                <th class="balance-cell">
+                                    Balance
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="transactionTableBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div
+                    id="noTransactions"
+                    class="no-transactions"
+                >
+                    No transactions found for the selected date range.
                 </div>
 
             </section>
