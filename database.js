@@ -9,7 +9,9 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-    timezone: "-04:00"
+});
+pool.pool.on("connection", (connection) => {
+    connection.query("SET time_zone = 'America/New_York'");
 });
 
 module.exports = pool;
