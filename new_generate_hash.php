@@ -28,4 +28,15 @@ echo "9001002030: " . password_hash('ENROLL2030', PASSWORD_DEFAULT) . "<br>";
 
 echo "9001002041: " . password_hash('ENROLL2041', PASSWORD_DEFAULT) . "<br>";
 
+echo "9001002009: " . password_hash('TEST3571', PASSWORD_DEFAULT) . "<br>";
+echo "9001002010: " . password_hash('TEST4826', PASSWORD_DEFAULT) . "<br>";
+echo "9001002012: " . password_hash('TEST6193', PASSWORD_DEFAULT) . "<br>";
+echo "9001002018: " . password_hash('TEST7254', PASSWORD_DEFAULT) . "<br>";
+echo "9001002019: " . password_hash('TEST8316', PASSWORD_DEFAULT) . "<br>";
+echo "9001002020: " . password_hash('TEST1947', PASSWORD_DEFAULT) . "<br>";
+echo "9001002021: " . password_hash('TEST5638', PASSWORD_DEFAULT) . "<br>";
+echo "9001002022: " . password_hash('TEST2749', PASSWORD_DEFAULT) . "<br>";
+echo "9001002023: " . password_hash('TEST6482', PASSWORD_DEFAULT) . "<br>";
+echo "9001002024: " . password_hash('TEST9153', PASSWORD_DEFAULT) . "<br>";
+
 ?>
