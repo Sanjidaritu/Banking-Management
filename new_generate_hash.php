@@ -39,4 +39,13 @@ echo "9001002022: " . password_hash('TEST2749', PASSWORD_DEFAULT) . "<br>";
 echo "9001002023: " . password_hash('TEST6482', PASSWORD_DEFAULT) . "<br>";
 echo "9001002024: " . password_hash('TEST9153', PASSWORD_DEFAULT) . "<br>";
 
+
+echo "9001006201: " . password_hash('TEST6201', PASSWORD_DEFAULT) . "<br>";
+echo "9001006202: " . password_hash('TEST6202', PASSWORD_DEFAULT) . "<br>";
+echo "9001006203: " . password_hash('TEST6203', PASSWORD_DEFAULT) . "<br>";
+echo "9001006204: " . password_hash('TEST6204', PASSWORD_DEFAULT) . "<br>";
+echo "9001006205: " . password_hash('TEST6205', PASSWORD_DEFAULT) . "<br>";
+echo "9001006206: " . password_hash('TEST6206', PASSWORD_DEFAULT) . "<br>";
+echo "9001006207: " . password_hash('TEST6207', PASSWORD_DEFAULT) . "<br>";
+
 ?>
