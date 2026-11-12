@@ -1116,6 +1116,251 @@ app.get("/api/dashboard", async (req, res) => {
 });
 
 
+
+
+// ======================================================
+// CUSTOMER PROFILE - GET
+// ======================================================
+
+app.get("/api/profile", async (req, res) => {
+    try {
+        // Check authentication
+        if (!req.session.user_id || !req.session.customer_id) {
+            return res.status(401).json({
+                success: false,
+                message: "Please log in to access your profile."
+            });
+        }
+
+        // Get authenticated customer ID from session
+        const customerId = req.session.customer_id;
+
+        const [rows] = await pool.execute(`
+            SELECT
+                first_name,
+                last_name,
+                email,
+                phone,
+                address,
+                city,
+                state,
+                postal_code,
+                DATE_FORMAT(date_of_birth, '%Y-%m-%d') AS date_of_birth,
+                email_verified,
+                phone_verified
+            FROM customers
+            WHERE id = ?
+            LIMIT 1
+        `, [customerId]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Customer profile not found."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            profile: rows[0]
+        });
+
+    } catch (error) {
+        console.error("PROFILE GET ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to retrieve customer profile."
+        });
+    }
+});
+
+
+// ======================================================
+// CUSTOMER PROFILE - PUT
+// ======================================================
+
+app.put("/api/profile", async (req, res) => {
+    try {
+        // Check authentication
+        if (!req.session.user_id || !req.session.customer_id) {
+            return res.status(401).json({
+                success: false,
+                message: "Please log in first."
+            });
+        }
+
+        const customerId = req.session.customer_id;
+        const body = req.body || {};
+
+        // Protected fields cannot be changed
+        const protectedFields = [
+            "id",
+            "customer_id",
+            "account_number",
+            "date_of_birth",
+            "ssn_last4"
+        ];
+
+        if (protectedFields.some(field =>
+            Object.prototype.hasOwnProperty.call(body, field)
+        )) {
+            return res.status(400).json({
+                success: false,
+                message: "Protected customer information cannot be changed."
+            });
+        }
+
+        // Require all editable profile fields in PUT request
+        const requiredKeys = [
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "address",
+            "city",
+            "state",
+            "postal_code"
+        ];
+
+        if (!requiredKeys.every(field =>
+            Object.prototype.hasOwnProperty.call(body, field)
+        )) {
+            return res.status(400).json({
+                success: false,
+                message: "Please submit all profile fields."
+            });
+        }
+
+        // Validate and normalize input
+        function cleanField(value, maxLength, required = false) {
+            if (typeof value !== "string") {
+                throw new Error("Invalid field format.");
+            }
+
+            const cleaned = value.trim();
+
+            if (required && !cleaned) {
+                throw new Error("First name and last name are required.");
+            }
+
+            if (cleaned.length > maxLength) {
+                throw new Error("One or more fields exceed the allowed length.");
+            }
+
+            return cleaned || null;
+        }
+
+        let firstName, lastName, email, phone;
+        let address, city, state, postalCode;
+
+        try {
+            firstName = cleanField(body.first_name, 100, true);
+            lastName = cleanField(body.last_name, 100, true);
+
+            email = cleanField(body.email, 255);
+            phone = cleanField(body.phone, 30);
+
+            address = cleanField(body.address, 255);
+            city = cleanField(body.city, 100);
+            state = cleanField(body.state, 100);
+            postalCode = cleanField(body.postal_code, 20);
+
+            if (email &&
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                throw new Error("Please enter a valid email address.");
+            }
+
+            if (phone) {
+                const digits = phone.replace(/\D/g, "");
+
+                if (
+                    !/^\+?[0-9\s().-]+$/.test(phone) ||
+                    digits.length < 7 ||
+                    digits.length > 15
+                ) {
+                    throw new Error("Please enter a valid phone number.");
+                }
+            }
+
+            if (postalCode &&
+                !/^[A-Za-z0-9][A-Za-z0-9 -]{1,19}$/.test(postalCode)) {
+                throw new Error("Please enter a valid ZIP/postal code.");
+            }
+
+        } catch (validationError) {
+            return res.status(400).json({
+                success: false,
+                message: validationError.message
+            });
+        }
+
+        // Update existing customer record
+        // Changed email/phone are marked unverified.
+        // DOB and SSN are never updated.
+
+        const [result] = await pool.execute(`
+            UPDATE customers
+            SET
+                email_verified = IF(email <=> ?, email_verified, 0),
+                phone_verified = IF(phone <=> ?, phone_verified, 0),
+                first_name = ?,
+                last_name = ?,
+                email = ?,
+                phone = ?,
+                address = ?,
+                city = ?,
+                state = ?,
+                postal_code = ?
+            WHERE id = ?
+        `, [
+            email,
+            phone,
+            firstName,
+            lastName,
+            email,
+            phone,
+            address,
+            city,
+            state,
+            postalCode,
+            customerId
+        ]);
+
+        // Zero affected rows can also mean no values changed.
+        // Check whether the customer actually exists.
+        if (result.affectedRows === 0) {
+            const [existing] = await pool.execute(
+                "SELECT id FROM customers WHERE id = ? LIMIT 1",
+                [customerId]
+            );
+
+            if (existing.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Customer profile not found."
+                });
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully."
+        });
+
+    } catch (error) {
+        console.error("PROFILE UPDATE ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to update customer profile."
+        });
+    }
+});
+
+
+
+
 // ======================================================
 // LOGOUT
 // ======================================================
