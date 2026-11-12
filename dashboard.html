@@ -346,6 +346,168 @@
             display: none;
         }
 
+/* =====================================================
+   TOP BAR ACTIONS
+===================================================== */
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-nav-button {
+    border: 1px solid white;
+    background: transparent;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.profile-nav-button:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+/* =====================================================
+   CUSTOMER PROFILE
+===================================================== */
+
+.profile-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.profile-header h2 {
+    margin: 0;
+    color: #123c69;
+}
+
+.profile-description {
+    color: #6b7280;
+    margin-bottom: 25px;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.profile-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-field label {
+    font-size: 14px;
+    color: #52627a;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.profile-field input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid #d5dce5;
+    border-radius: 7px;
+    padding: 0 13px;
+    font-size: 15px;
+    color: #172b4d;
+}
+
+.profile-field input:disabled {
+    background: #f3f6f9;
+    color: #596674;
+    cursor: not-allowed;
+}
+
+.profile-field input:focus {
+    outline: none;
+    border-color: #1769c2;
+}
+
+.verification-status {
+    font-size: 12px;
+    margin-top: 6px;
+    color: #b45309;
+}
+
+.verification-status.verified {
+    color: #16833b;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.profile-button {
+    border: none;
+    border-radius: 6px;
+    padding: 11px 22px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.edit-profile-button,
+.save-profile-button {
+    background: #1765b8;
+    color: white;
+}
+
+.cancel-profile-button {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.profile-message {
+    display: none;
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 6px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 14px;
+}
+
+@media (max-width: 700px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-card {
+        padding: 20px 15px;
+    }
+
+    .profile-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .topbar-actions {
+        gap: 7px;
+    }
+
+    .profile-nav-button,
+    .logout-button {
+        padding: 9px 11px;
+        font-size: 12px;
+    }
+   
         /* =====================================================
            ERROR
            ===================================================== */
@@ -452,6 +614,21 @@
             Upright Bank
         </div>
 
+
+    <div class="topbar-actions">
+
+        <button
+            type="button"
+            class="profile-nav-button"
+            id="profileNavButton"
+        >
+            My Profile
+        </button>
+
+        
+    </div>
+
+        
         <button
             type="button"
             class="logout-button"
@@ -461,7 +638,6 @@
         </button>
 
     </header>
-
 
     <main class="container">
 
