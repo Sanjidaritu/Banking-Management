@@ -1,12 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Upright Bank - Dashboard</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -18,7 +25,10 @@
             color: #1f2937;
         }
 
-        /* TOP BAR */
+        /* =====================================================
+           TOP BAR
+           ===================================================== */
+
         .topbar {
             background: #123c69;
             color: white;
@@ -33,48 +43,34 @@
             font-weight: bold;
         }
 
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logout-button,
-        .profile-nav-button {
+        .logout-button {
+            border: none;
+            background: white;
+            color: #123c69;
             padding: 10px 18px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
         }
 
-        .logout-button {
-            border: none;
-            background: white;
-            color: #123c69;
-        }
-
         .logout-button:hover {
             background: #eaf0f7;
         }
 
-        .profile-nav-button {
-            border: 1px solid white;
-            background: transparent;
-            color: white;
-        }
+        /* =====================================================
+           MAIN CONTAINER
+           ===================================================== */
 
-        .profile-nav-button:hover {
-            background: rgba(255,255,255,0.12);
-        }
-
-        /* MAIN CONTAINER */
         .container {
             max-width: 1280px;
             margin: 40px auto;
             padding: 0 20px;
         }
 
-        /* WELCOME */
+        /* =====================================================
+           WELCOME
+           ===================================================== */
+
         .welcome {
             margin-bottom: 30px;
         }
@@ -90,7 +86,10 @@
             color: #6b7280;
         }
 
-        /* BALANCE */
+        /* =====================================================
+           BALANCE
+           ===================================================== */
+
         .balance-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -102,7 +101,7 @@
             background: white;
             padding: 28px;
             border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
         }
 
         .balance-label {
@@ -117,12 +116,15 @@
             font-weight: bold;
         }
 
-        /* ACCOUNT INFORMATION */
+        /* =====================================================
+           ACCOUNT INFORMATION
+           ===================================================== */
+
         .account-card {
             background: white;
             padding: 28px;
             border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
             margin-bottom: 25px;
         }
 
@@ -159,124 +161,15 @@
             font-size: 13px;
         }
 
-        /* CUSTOMER PROFILE */
-        .profile-card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
-            scroll-margin-top: 20px;
-        }
+        /* =====================================================
+           TRANSACTION HISTORY
+           ===================================================== */
 
-        .profile-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .profile-header h2 {
-            margin: 0;
-            color: #123c69;
-        }
-
-        .profile-description {
-            color: #6b7280;
-            margin-bottom: 25px;
-        }
-
-        .profile-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .profile-field {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .profile-field label {
-            font-size: 14px;
-            color: #52627a;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .profile-field input {
-            width: 100%;
-            height: 48px;
-            border: 1px solid #d5dce5;
-            border-radius: 7px;
-            padding: 0 13px;
-            font-size: 15px;
-            color: #172b4d;
-        }
-
-        .profile-field input:disabled {
-            background: #f3f6f9;
-            color: #596674;
-            cursor: not-allowed;
-        }
-
-        .profile-field input:focus {
-            outline: none;
-            border-color: #1769c2;
-        }
-
-        .verification-status {
-            font-size: 12px;
-            margin-top: 6px;
-            color: #b45309;
-        }
-
-        .verification-status.verified {
-            color: #16833b;
-        }
-
-        .profile-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
-        }
-
-        .profile-button {
-            border: none;
-            border-radius: 6px;
-            padding: 11px 22px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .edit-profile-button,
-        .save-profile-button {
-            background: #1765b8;
-            color: white;
-        }
-
-        .cancel-profile-button {
-            background: #e5e7eb;
-            color: #374151;
-        }
-
-        .profile-message {
-            display: none;
-            margin-top: 18px;
-            padding: 12px;
-            border-radius: 6px;
-            background: #fff7ed;
-            color: #9a3412;
-            font-size: 14px;
-        }
-
-        /* TRANSACTION HISTORY */
         .transaction-card {
             background: white;
             padding: 34px;
             border-radius: 10px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
             margin-bottom: 25px;
         }
 
@@ -296,7 +189,10 @@
             font-size: 16px;
         }
 
-        /* TRANSACTION FILTERS */
+        /* =====================================================
+           TRANSACTION FILTERS
+           ===================================================== */
+
         .transaction-filters {
             display: grid;
             grid-template-columns: minmax(250px, 1fr) 235px 235px 165px;
@@ -331,7 +227,7 @@
         .filter-group input:focus,
         .filter-group select:focus {
             border-color: #1769c2;
-            box-shadow: 0 0 0 2px rgba(23,105,194,0.08);
+            box-shadow: 0 0 0 2px rgba(23, 105, 194, 0.08);
         }
 
         .search-button {
@@ -349,7 +245,10 @@
             background: #12549b;
         }
 
-        /* TRANSACTION TABLE */
+        /* =====================================================
+           TRANSACTION TABLE
+           ===================================================== */
+
         .transaction-table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -398,7 +297,10 @@
             white-space: nowrap;
         }
 
-        /* TRANSACTION BADGES */
+        /* =====================================================
+           CREDIT / DEBIT BADGES
+           ===================================================== */
+
         .transaction-badge {
             display: inline-block;
             padding: 7px 14px;
@@ -427,7 +329,10 @@
             font-weight: bold;
         }
 
-        /* LOADING / EMPTY */
+        /* =====================================================
+           TRANSACTION LOADING / EMPTY
+           ===================================================== */
+
         .transaction-loading {
             text-align: center;
             padding: 35px;
@@ -440,6 +345,10 @@
             color: #6b7280;
             display: none;
         }
+
+        /* =====================================================
+           ERROR
+           ===================================================== */
 
         .error {
             display: none;
@@ -456,7 +365,10 @@
             color: #6b7280;
         }
 
-        /* FOOTER */
+        /* =====================================================
+           FOOTER
+           ===================================================== */
+
         .footer {
             text-align: center;
             color: #9ca3af;
@@ -465,8 +377,12 @@
             font-size: 13px;
         }
 
-        /* RESPONSIVE */
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
         @media (max-width: 900px) {
+
             .transaction-filters {
                 grid-template-columns: 1fr 1fr;
                 gap: 18px;
@@ -475,25 +391,17 @@
             .search-button {
                 width: 100%;
             }
+
         }
 
         @media (max-width: 700px) {
+
             .topbar {
                 padding: 16px 18px;
             }
 
             .bank-name {
                 font-size: 20px;
-            }
-
-            .topbar-actions {
-                gap: 7px;
-            }
-
-            .profile-nav-button,
-            .logout-button {
-                padding: 9px 11px;
-                font-size: 12px;
             }
 
             .container {
@@ -517,19 +425,6 @@
                 max-width: 55%;
             }
 
-            .profile-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .profile-card {
-                padding: 20px 15px;
-            }
-
-            .profile-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
             .transaction-card {
                 padding: 20px 15px;
             }
@@ -542,55 +437,62 @@
                 grid-template-columns: 1fr;
                 gap: 15px;
             }
+
         }
+
     </style>
+
 </head>
 
 <body>
 
-    <!-- TOP BAR -->
     <header class="topbar">
 
         <div class="bank-name">
             Upright Bank
         </div>
 
-        <div class="topbar-actions">
-
-            <button
-                type="button"
-                class="profile-nav-button"
-                id="profileNavButton"
-            >
-                My Profile
-            </button>
-
-            <button
-                type="button"
-                class="logout-button"
-                id="logoutButton"
-            >
-                Logout
-            </button>
-
-        </div>
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            Logout
+        </button>
 
     </header>
 
+
     <main class="container">
 
-        <div id="errorMessage" class="error"></div>
+        <div
+            id="errorMessage"
+            class="error"
+        ></div>
 
-        <div id="loadingMessage" class="loading">
+
+        <div
+            id="loadingMessage"
+            class="loading"
+        >
             Loading your account...
         </div>
 
-        <div id="dashboardContent" style="display:none;">
 
-            <!-- WELCOME -->
+        <div
+            id="dashboardContent"
+            style="display: none;"
+        >
+
+            <!-- =================================================
+                 WELCOME
+                 ================================================= -->
+
             <section class="welcome">
 
-                <h1 id="welcomeName">Welcome</h1>
+                <h1 id="welcomeName">
+                    Welcome
+                </h1>
 
                 <p>
                     Welcome to your Upright Bank online banking dashboard.
@@ -598,197 +500,211 @@
 
             </section>
 
-            <!-- BALANCE -->
+
+            <!-- =================================================
+                 BALANCE
+                 ================================================= -->
+
             <section class="balance-grid">
 
                 <div class="balance-card">
-                    <div class="balance-label">Current Balance</div>
-                    <div class="balance" id="currentBalance">$0.00</div>
-                </div>
 
-                <div class="balance-card">
-                    <div class="balance-label">Available Balance</div>
-                    <div class="balance" id="availableBalance">$0.00</div>
-                </div>
-
-            </section>
-
-            <!-- ACCOUNT INFORMATION -->
-            <section class="account-card">
-
-                <h2>Account Information</h2>
-
-                <div class="account-row">
-                    <div class="label">Customer Name</div>
-                    <div class="value" id="customerName">-</div>
-                </div>
-
-                <div class="account-row">
-                    <div class="label">Username</div>
-                    <div class="value" id="username">-</div>
-                </div>
-
-                <div class="account-row">
-                    <div class="label">Account Number</div>
-                    <div class="value" id="accountNumber">-</div>
-                </div>
-
-                <div class="account-row">
-                    <div class="label">Account Type</div>
-                    <div class="value" id="accountType">-</div>
-                </div>
-
-                <div class="account-row">
-                    <div class="label">Account Status</div>
-                    <div class="value">
-                        <span class="status" id="accountStatus">Active</span>
-                    </div>
-                </div>
-
-            </section>
-
-            <!-- CUSTOMER PROFILE -->
-            <section
-                class="profile-card"
-                id="profileSection"
-                style="display:none;"
-            >
-
-                <div class="profile-header">
-
-                    <h2>My Profile</h2>
-
-                    <button
-                        type="button"
-                        class="profile-button edit-profile-button"
-                        id="editProfileButton"
-                    >
-                        Edit Profile
-                    </button>
-
-                </div>
-
-                <p class="profile-description">
-                    Review and update your personal and contact information.
-                </p>
-
-                <form id="profileForm">
-
-                    <div class="profile-grid">
-
-                        <div class="profile-field">
-                            <label for="profileFirstName">First Name</label>
-                            <input type="text" id="profileFirstName" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileLastName">Last Name</label>
-                            <input type="text" id="profileLastName" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileEmail">Email Address</label>
-                            <input type="email" id="profileEmail" disabled>
-                            <span id="emailVerificationStatus" class="verification-status">
-                                Not verified
-                            </span>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profilePhone">Phone Number</label>
-                            <input type="tel" id="profilePhone" disabled>
-                            <span id="phoneVerificationStatus" class="verification-status">
-                                Not verified
-                            </span>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileAddress">Street Address</label>
-                            <input type="text" id="profileAddress" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileCity">City</label>
-                            <input type="text" id="profileCity" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileState">State</label>
-                            <input type="text" id="profileState" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profilePostalCode">Postal Code</label>
-                            <input type="text" id="profilePostalCode" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileDOB">Date of Birth</label>
-                            <input type="text" id="profileDOB" disabled>
-                        </div>
-
-                        <div class="profile-field">
-                            <label for="profileSSN">SSN (Last 4 Digits)</label>
-                            <input type="text" id="profileSSN" disabled>
-                        </div>
-
+                    <div class="balance-label">
+                        Current Balance
                     </div>
 
                     <div
-                        class="profile-actions"
-                        id="profileActions"
-                        style="display:none;"
+                        class="balance"
+                        id="currentBalance"
                     >
-
-                        <button
-                            type="submit"
-                            class="profile-button save-profile-button"
-                        >
-                            Save Changes
-                        </button>
-
-                        <button
-                            type="button"
-                            class="profile-button cancel-profile-button"
-                            id="cancelProfileButton"
-                        >
-                            Cancel
-                        </button>
-
+                        $0.00
                     </div>
 
-                    <div id="profileMessage" class="profile-message"></div>
+                </div>
 
-                </form>
+
+                <div class="balance-card">
+
+                    <div class="balance-label">
+                        Available Balance
+                    </div>
+
+                    <div
+                        class="balance"
+                        id="availableBalance"
+                    >
+                        $0.00
+                    </div>
+
+                </div>
 
             </section>
 
-            <!-- TRANSACTION HISTORY -->
+
+            <!-- =================================================
+                 ACCOUNT INFORMATION
+                 ================================================= -->
+
+            <section class="account-card">
+
+                <h2>
+                    Account Information
+                </h2>
+
+
+                <div class="account-row">
+
+                    <div class="label">
+                        Customer Name
+                    </div>
+
+                    <div
+                        class="value"
+                        id="customerName"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="account-row">
+
+                    <div class="label">
+                        Username
+                    </div>
+
+                    <div
+                        class="value"
+                        id="username"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="account-row">
+
+                    <div class="label">
+                        Account Number
+                    </div>
+
+                    <div
+                        class="value"
+                        id="accountNumber"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="account-row">
+
+                    <div class="label">
+                        Account Type
+                    </div>
+
+                    <div
+                        class="value"
+                        id="accountType"
+                    >
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="account-row">
+
+                    <div class="label">
+                        Account Status
+                    </div>
+
+                    <div class="value">
+
+                        <span
+                            class="status"
+                            id="accountStatus"
+                        >
+                            Active
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 TRANSACTION HISTORY
+                 ================================================= -->
+
             <section class="transaction-card">
 
                 <div class="transaction-header">
-                    <h2>Transaction History</h2>
-                    <p>View your recent account transactions.</p>
+
+                    <h2>
+                        Transaction History
+                    </h2>
+
+                    <p>
+                        View your recent account transactions.
+                    </p>
+
                 </div>
+
+
+                <!-- FILTERS -->
 
                 <div class="transaction-filters">
 
                     <div class="filter-group">
-                        <label for="transactionAccount">Account</label>
+
+                        <label for="transactionAccount">
+                            Account
+                        </label>
+
                         <select id="transactionAccount">
-                            <option value="">Checking</option>
+                            <option value="">
+                                Checking
+                            </option>
                         </select>
+
                     </div>
 
-                    <div class="filter-group">
-                        <label for="fromDate">From Date</label>
-                        <input type="date" id="fromDate" value="2025-08-01">
-                    </div>
 
                     <div class="filter-group">
-                        <label for="toDate">To Date</label>
-                        <input type="date" id="toDate" value="2025-09-16">
+
+                        <label for="fromDate">
+                            From Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="fromDate"
+                            value="2025-08-01"
+                        >
+
                     </div>
+
+
+                    <div class="filter-group">
+
+                        <label for="toDate">
+                            To Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="toDate"
+                            value="2025-09-16"
+                        >
+
+                    </div>
+
 
                     <button
                         type="button"
@@ -800,35 +716,62 @@
 
                 </div>
 
+
+                <!-- TABLE -->
+
                 <div
                     id="transactionLoading"
                     class="transaction-loading"
-                    style="display:none;"
+                    style="display: none;"
                 >
                     Loading transactions...
                 </div>
+
 
                 <div class="transaction-table-wrapper">
 
                     <table class="transaction-table">
 
                         <thead>
+
                             <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Type</th>
-                                <th class="amount-cell">Amount</th>
-                                <th class="balance-cell">Balance</th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Description
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th class="amount-cell">
+                                    Amount
+                                </th>
+
+                                <th class="balance-cell">
+                                    Balance
+                                </th>
+
                             </tr>
+
                         </thead>
 
-                        <tbody id="transactionTableBody"></tbody>
+                        <tbody id="transactionTableBody">
+                        </tbody>
 
                     </table>
 
                 </div>
 
-                <div id="noTransactions" class="no-transactions">
+
+                <div
+                    id="noTransactions"
+                    class="no-transactions"
+                >
                     No transactions found for the selected date range.
                 </div>
 
@@ -836,60 +779,16 @@
 
         </div>
 
+
         <div class="footer">
             © 2026 Upright Bank. All rights reserved.
         </div>
 
     </main>
 
+
     <script src="dashboard.js"></script>
 
-    <script>
-        /* =====================================================
-           PROFILE NAVIGATION
-        ===================================================== */
-
-        document.addEventListener("DOMContentLoaded", function() {
-
-            const profileButton =
-                document.getElementById("profileNavButton");
-
-            const profileSection =
-                document.getElementById("profileSection");
-
-            if (!profileButton || !profileSection) {
-                console.error("Profile HTML elements not found.");
-                return;
-            }
-
-            profileButton.addEventListener("click", function() {
-
-                if (
-                    document.getElementById("dashboardContent").style.display === "none"
-                ) {
-                    return;
-                }
-
-                const isHidden =
-                    window.getComputedStyle(profileSection).display === "none";
-
-                profileSection.style.display =
-                    isHidden ? "block" : "none";
-
-                profileButton.textContent =
-                    isHidden ? "Close Profile" : "My Profile";
-
-                if (isHidden) {
-                    profileSection.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-                }
-
-            });
-
-        });
-    </script>
-
 </body>
+
 </html>
