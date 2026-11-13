@@ -1,29 +1,29 @@
 
 <?php
+// IMPORTANT: No spaces, blank lines, or HTML before this PHP opening tag.
+
+ob_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 header('Content-Type: application/json; charset=utf-8');
 
-session_start();
-
 require_once __DIR__ . '/config.php';
 
-session_start();
-
-require_once __DIR__ . '/config.php';
-
-/**
- * Return JSON response and stop execution.
- */
 function profile_response(array $data, int $status = 200): never
 {
+    // Remove any accidental buffered output.
+    ob_clean();
+
     http_response_code($status);
     echo json_encode($data);
     exit;
 }
 
-/**
- * Check login session.
- */
-if (!isset($_SESSION['customer_id'])) {
+// Check authenticated session.
+if (empty($_SESSION['customer_id'])) {
     profile_response([
         'success' => false,
         'message' => 'Please log in to access your profile.'
@@ -41,11 +41,8 @@ if ($customerId <= 0) {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-/**
- * GET: Retrieve customer profile.
- */
+// GET: Retrieve profile.
 if ($method === 'GET') {
-
     try {
         $stmt = $pdo->prepare("
             SELECT
@@ -96,7 +93,6 @@ if ($method === 'GET') {
         ]);
 
     } catch (Throwable $e) {
-
         error_log('Profile GET error: ' . $e->getMessage());
 
         profile_response([
@@ -106,11 +102,8 @@ if ($method === 'GET') {
     }
 }
 
-/**
- * PUT: Update customer profile.
- */
+// PUT: Update profile.
 if ($method === 'PUT') {
-
     $rawInput = file_get_contents('php://input');
     $data = json_decode($rawInput ?: '', true);
 
@@ -121,17 +114,15 @@ if ($method === 'PUT') {
         ], 400);
     }
 
-    // Collect editable fields.
-    $firstName = trim((string) ($data['firstName'] ?? ''));
-    $lastName = trim((string) ($data['lastName'] ?? ''));
-    $email = strtolower(trim((string) ($data['email'] ?? '')));
-    $phone = trim((string) ($data['phone'] ?? ''));
-    $address = trim((string) ($data['streetAddress'] ?? ''));
-    $city = trim((string) ($data['city'] ?? ''));
-    $state = trim((string) ($data['state'] ?? ''));
-    $zipCode = trim((string) ($data['zipCode'] ?? ''));
+    $firstName = trim((string)($data['firstName'] ?? ''));
+    $lastName = trim((string)($data['lastName'] ?? ''));
+    $email = strtolower(trim((string)($data['email'] ?? '')));
+    $phone = trim((string)($data['phone'] ?? ''));
+    $address = trim((string)($data['streetAddress'] ?? ''));
+    $city = trim((string)($data['city'] ?? ''));
+    $state = trim((string)($data['state'] ?? ''));
+    $zipCode = trim((string)($data['zipCode'] ?? ''));
 
-    // Required field validation.
     if (
         $firstName === '' ||
         $lastName === '' ||
@@ -148,7 +139,6 @@ if ($method === 'PUT') {
         ], 400);
     }
 
-    // Length validation.
     if (
         strlen($firstName) > 100 ||
         strlen($lastName) > 100 ||
@@ -165,7 +155,6 @@ if ($method === 'PUT') {
         ], 400);
     }
 
-    // Email validation.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         profile_response([
             'success' => false,
@@ -173,7 +162,6 @@ if ($method === 'PUT') {
         ], 400);
     }
 
-    // Phone validation.
     if (!preg_match('/^\+?[0-9\s().-]{7,30}$/', $phone)) {
         profile_response([
             'success' => false,
@@ -181,7 +169,6 @@ if ($method === 'PUT') {
         ], 400);
     }
 
-    // US ZIP code validation.
     if (!preg_match('/^\d{5}(-\d{4})?$/', $zipCode)) {
         profile_response([
             'success' => false,
@@ -190,14 +177,10 @@ if ($method === 'PUT') {
     }
 
     try {
-
         $pdo->beginTransaction();
 
-        // Lock the existing customer record.
         $stmt = $pdo->prepare("
-            SELECT
-                email,
-                phone
+            SELECT email, phone
             FROM customers
             WHERE id = :customer_id
             FOR UPDATE
@@ -207,9 +190,9 @@ if ($method === 'PUT') {
             ':customer_id' => $customerId
         ]);
 
-        $existingCustomer = $stmt->fetch(PDO::FETCH_ASSOC);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$existingCustomer) {
+        if (!$existing) {
             $pdo->rollBack();
 
             profile_response([
@@ -218,11 +201,12 @@ if ($method === 'PUT') {
             ], 404);
         }
 
-        // Check whether email or phone has changed.
-        $emailChanged = strtolower(trim((string) $existingCustomer['email'])) !== $email;
-        $phoneChanged = trim((string) $existingCustomer['phone']) !== $phone;
+        $emailChanged =
+            strtolower(trim((string)$existing['email'])) !== $email;
 
-        // Reset verification status when contact details change.
+        $phoneChanged =
+            trim((string)$existing['phone']) !== $phone;
+
         $stmt = $pdo->prepare("
             UPDATE customers
             SET
@@ -268,10 +252,9 @@ if ($method === 'PUT') {
             'phoneVerified' => !$phoneChanged,
             'emailVerificationRequired' => $emailChanged,
             'phoneVerificationRequired' => $phoneChanged
-        ], 200);
+        ]);
 
     } catch (Throwable $e) {
-
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
@@ -285,9 +268,6 @@ if ($method === 'PUT') {
     }
 }
 
-/**
- * Unsupported HTTP methods.
- */
 header('Allow: GET, PUT');
 
 profile_response([
