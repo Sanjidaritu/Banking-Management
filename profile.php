@@ -1,20 +1,16 @@
 
 <?php
-
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
 session_start();
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/config.php';
 
-/*
-|--------------------------------------------------------------------------
-| JSON response helper
-|--------------------------------------------------------------------------
-*/
-
+/**
+ * Return JSON response and stop execution.
+ */
 function profile_response(array $data, int $status = 200): never
 {
     http_response_code($status);
@@ -22,13 +18,10 @@ function profile_response(array $data, int $status = 200): never
     exit;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Authentication
-|--------------------------------------------------------------------------
-*/
-
-if (empty($_SESSION['customer_id'])) {
+/**
+ * Check login session.
+ */
+if (!isset($_SESSION['customer_id'])) {
     profile_response([
         'success' => false,
         'message' => 'Please log in to access your profile.'
@@ -44,16 +37,14 @@ if ($customerId <= 0) {
     ], 401);
 }
 
-/*
-|--------------------------------------------------------------------------
-| GET: Retrieve customer profile
-|--------------------------------------------------------------------------
-*/
+$method = $_SERVER['REQUEST_METHOD'];
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+/**
+ * GET: Retrieve customer profile.
+ */
+if ($method === 'GET') {
 
     try {
-
         $stmt = $pdo->prepare("
             SELECT
                 first_name,
@@ -77,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ':customer_id' => $customerId
         ]);
 
-        $customer = $stmt->fetch();
+        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$customer) {
             profile_response([
@@ -92,12 +83,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'lastName' => $customer['last_name'],
             'dateOfBirth' => $customer['date_of_birth'],
             'ssnLast4' => $customer['ssn_last4'],
-            'email' => $customer['email'] ?? '',
-            'phone' => $customer['phone'] ?? '',
-            'streetAddress' => $customer['address'] ?? '',
-            'city' => $customer['city'] ?? '',
-            'state' => $customer['state'] ?? '',
-            'zipCode' => $customer['postal_code'] ?? '',
+            'email' => $customer['email'],
+            'phone' => $customer['phone'],
+            'streetAddress' => $customer['address'],
+            'city' => $customer['city'],
+            'state' => $customer['state'],
+            'zipCode' => $customer['postal_code'],
             'emailVerified' => (bool) $customer['email_verified'],
             'phoneVerified' => (bool) $customer['phone_verified']
         ]);
@@ -108,21 +99,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         profile_response([
             'success' => false,
-            'message' => 'Unable to retrieve your profile.'
+            'message' => 'Unable to load customer profile.'
         ], 500);
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| PUT: Update customer profile
-|--------------------------------------------------------------------------
-*/
+/**
+ * PUT: Update customer profile.
+ */
+if ($method === 'PUT') {
 
-if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-
-    $raw = file_get_contents('php://input');
-    $data = json_decode($raw ?: '', true);
+    $rawInput = file_get_contents('php://input');
+    $data = json_decode($rawInput ?: '', true);
 
     if (!is_array($data)) {
         profile_response([
@@ -131,12 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Read input
-    |--------------------------------------------------------------------------
-    */
-
+    // Collect editable fields.
     $firstName = trim((string) ($data['firstName'] ?? ''));
     $lastName = trim((string) ($data['lastName'] ?? ''));
     $email = strtolower(trim((string) ($data['email'] ?? '')));
@@ -146,62 +129,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $state = trim((string) ($data['state'] ?? ''));
     $zipCode = trim((string) ($data['zipCode'] ?? ''));
 
-    /*
-    |--------------------------------------------------------------------------
-    | Required fields
-    |--------------------------------------------------------------------------
-    */
-
-    $fields = [
-        'First name' => $firstName,
-        'Last name' => $lastName,
-        'Email' => $email,
-        'Phone' => $phone,
-        'Street address' => $address,
-        'City' => $city,
-        'State' => $state,
-        'ZIP code' => $zipCode
-    ];
-
-    foreach ($fields as $label => $value) {
-        if ($value === '') {
-            profile_response([
-                'success' => false,
-                'message' => $label . ' is required.'
-            ], 400);
-        }
+    // Required field validation.
+    if (
+        $firstName === '' ||
+        $lastName === '' ||
+        $email === '' ||
+        $phone === '' ||
+        $address === '' ||
+        $city === '' ||
+        $state === '' ||
+        $zipCode === ''
+    ) {
+        profile_response([
+            'success' => false,
+            'message' => 'Please complete all required fields.'
+        ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Maximum lengths
-    |--------------------------------------------------------------------------
-    */
-
-    $lengths = [
-        strlen($firstName) <= 100,
-        strlen($lastName) <= 100,
-        strlen($email) <= 255,
-        strlen($phone) <= 30,
-        strlen($address) <= 255,
-        strlen($city) <= 100,
-        strlen($state) <= 100,
-        strlen($zipCode) <= 20
-    ];
-
-    if (in_array(false, $lengths, true)) {
+    // Length validation.
+    if (
+        strlen($firstName) > 100 ||
+        strlen($lastName) > 100 ||
+        strlen($email) > 255 ||
+        strlen($phone) > 30 ||
+        strlen($address) > 255 ||
+        strlen($city) > 100 ||
+        strlen($state) > 100 ||
+        strlen($zipCode) > 20
+    ) {
         profile_response([
             'success' => false,
             'message' => 'One or more fields exceed the allowed length.'
         ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Email validation
-    |--------------------------------------------------------------------------
-    */
-
+    // Email validation.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         profile_response([
             'success' => false,
@@ -209,12 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Phone validation
-    |--------------------------------------------------------------------------
-    */
-
+    // Phone validation.
     if (!preg_match('/^\+?[0-9\s().-]{7,30}$/', $phone)) {
         profile_response([
             'success' => false,
@@ -222,12 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | US ZIP validation
-    |--------------------------------------------------------------------------
-    */
-
+    // US ZIP code validation.
     if (!preg_match('/^\d{5}(-\d{4})?$/', $zipCode)) {
         profile_response([
             'success' => false,
@@ -235,22 +187,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         ], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Database update
-    |--------------------------------------------------------------------------
-    */
-
     try {
 
         $pdo->beginTransaction();
 
+        // Lock the existing customer record.
         $stmt = $pdo->prepare("
             SELECT
                 email,
-                phone,
-                email_verified,
-                phone_verified
+                phone
             FROM customers
             WHERE id = :customer_id
             FOR UPDATE
@@ -260,9 +205,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             ':customer_id' => $customerId
         ]);
 
-        $existing = $stmt->fetch();
+        $existingCustomer = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$existing) {
+        if (!$existingCustomer) {
             $pdo->rollBack();
 
             profile_response([
@@ -271,21 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             ], 404);
         }
 
-        $emailChanged =
-            strtolower((string) ($existing['email'] ?? '')) !== $email;
+        // Check whether email or phone has changed.
+        $emailChanged = strtolower(trim((string) $existingCustomer['email'])) !== $email;
+        $phoneChanged = trim((string) $existingCustomer['phone']) !== $phone;
 
-        $phoneChanged =
-            (string) ($existing['phone'] ?? '') !== $phone;
-
-        $emailVerified = $emailChanged
-            ? 0
-            : (int) $existing['email_verified'];
-
-        $phoneVerified = $phoneChanged
-            ? 0
-            : (int) $existing['phone_verified'];
-
-        $update = $pdo->prepare("
+        // Reset verification status when contact details change.
+        $stmt = $pdo->prepare("
             UPDATE customers
             SET
                 first_name = :first_name,
@@ -296,12 +232,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
                 city = :city,
                 state = :state,
                 postal_code = :postal_code,
-                email_verified = :email_verified,
-                phone_verified = :phone_verified
+                email_verified = CASE
+                    WHEN :email_changed = 1 THEN 0
+                    ELSE email_verified
+                END,
+                phone_verified = CASE
+                    WHEN :phone_changed = 1 THEN 0
+                    ELSE phone_verified
+                END
             WHERE id = :customer_id
         ");
 
-        $update->execute([
+        $stmt->execute([
             ':first_name' => $firstName,
             ':last_name' => $lastName,
             ':email' => $email,
@@ -310,8 +252,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             ':city' => $city,
             ':state' => $state,
             ':postal_code' => $zipCode,
-            ':email_verified' => $emailVerified,
-            ':phone_verified' => $phoneVerified,
+            ':email_changed' => $emailChanged ? 1 : 0,
+            ':phone_changed' => $phoneChanged ? 1 : 0,
             ':customer_id' => $customerId
         ]);
 
@@ -320,8 +262,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         profile_response([
             'success' => true,
             'message' => 'Profile updated successfully.',
-            'emailVerified' => (bool) $emailVerified,
-            'phoneVerified' => (bool) $phoneVerified,
+            'emailVerified' => !$emailChanged,
+            'phoneVerified' => !$phoneChanged,
             'emailVerificationRequired' => $emailChanged,
             'phoneVerificationRequired' => $phoneChanged
         ], 200);
@@ -336,17 +278,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
         profile_response([
             'success' => false,
-            'message' => 'Unable to update your profile.'
+            'message' => 'Unable to update customer profile.'
         ], 500);
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Unsupported HTTP methods
-|--------------------------------------------------------------------------
-*/
-
+/**
+ * Unsupported HTTP methods.
+ */
 header('Allow: GET, PUT');
 
 profile_response([
