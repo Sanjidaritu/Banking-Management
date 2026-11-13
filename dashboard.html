@@ -780,6 +780,550 @@
         </div>
 
 
+        
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Upright Bank - Customer Profile</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7fb;
+            color: #263445;
+        }
+
+        .navbar {
+            background: #102d50;
+            color: white;
+            padding: 18px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 23px;
+            font-weight: bold;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 22px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-heading {
+            margin-bottom: 25px;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 8px;
+            color: #102d50;
+            font-size: 28px;
+        }
+
+        .page-heading p {
+            color: #718096;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+        }
+
+        .section-title {
+            color: #102d50;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 5px 0 22px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5eaf0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #34445a;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d5dce5;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+            background: white;
+            color: #263445;
+        }
+
+        input:focus {
+            border-color: #2364a5;
+            box-shadow: 0 0 0 2px rgba(35,100,165,0.10);
+        }
+
+        input[readonly] {
+            background: #f0f3f7;
+            color: #667085;
+            cursor: not-allowed;
+        }
+
+        .readonly-note {
+            color: #7b8797;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .button-area {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #e5eaf0;
+            padding-top: 22px;
+        }
+
+        button {
+            border: none;
+            padding: 13px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .save-btn {
+            background: #1764a5;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #104c80;
+        }
+
+        .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .cancel-btn {
+            background: #e9edf3;
+            color: #34445a;
+        }
+
+        .message {
+            display: none;
+            padding: 13px 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .success {
+            display: block;
+            background: #e7f7ed;
+            color: #187442;
+            border: 1px solid #b8e5c8;
+        }
+
+        .error {
+            display: block;
+            background: #fdecec;
+            color: #b42318;
+            border: 1px solid #f5c2c0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 25px;
+            color: #667085;
+        }
+
+        @media(max-width: 650px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-card {
+                padding: 20px;
+            }
+
+            .navbar {
+                padding: 16px 20px;
+            }
+
+            .navbar a {
+                margin-left: 10px;
+            }
+
+            .brand {
+                font-size: 19px;
+            }
+        }
+    </style>
+
+
+    <main class="container">
+
+        <div class="page-heading">
+            <h1>Customer Profile</h1>
+            <p>Review and manage your personal and contact information.</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div id="loading" class="loading">
+            Loading your profile...
+        </div>
+
+        <form id="profileForm" class="profile-card" style="display:none;">
+
+            <h2 class="section-title">Personal Information</h2>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="firstName">First Name *</label>
+                    <input type="text" id="firstName" name="firstName"
+                           maxlength="50" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input type="text" id="lastName" name="lastName"
+                           maxlength="50" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth</label>
+                    <input type="text" id="dateOfBirth" readonly>
+                    <span class="readonly-note">This information cannot be edited.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="ssn">Social Security Number</label>
+                    <input type="password" id="ssn" readonly
+                           autocomplete="off"
+                           placeholder="Protected information">
+                    <span class="readonly-note">This information cannot be edited.</span>
+                </div>
+
+            </div>
+
+            <h2 class="section-title">Contact Information</h2>
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email"
+                           maxlength="254" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone"
+                           maxlength="20" required
+                           placeholder="Enter phone number">
+                </div>
+
+                <div class="form-group">
+                    <label for="streetAddress">Street Address *</label>
+                    <input type="text" id="streetAddress"
+                           name="streetAddress" maxlength="150" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City *</label>
+                    <input type="text" id="city" name="city"
+                           maxlength="80" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="state">State *</label>
+                    <input type="text" id="state" name="state"
+                           maxlength="50" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="zipCode">ZIP Code *</label>
+                    <input type="text" id="zipCode" name="zipCode"
+                           maxlength="10" required
+                           placeholder="Enter ZIP code">
+                </div>
+
+            </div>
+
+            <div class="button-area">
+
+                <button type="button" class="cancel-btn"
+                        id="cancelBtn">
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-btn" id="saveBtn">
+                    Save Profile
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+
+    <script>
+
+        const profileForm = document.getElementById("profileForm");
+        const messageBox = document.getElementById("message");
+        const loading = document.getElementById("loading");
+        const saveBtn = document.getElementById("saveBtn");
+
+        let originalProfile = {};
+
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = "message " + type;
+        }
+
+        function clearMessage() {
+            messageBox.textContent = "";
+            messageBox.className = "message";
+        }
+
+        function populateProfile(data) {
+
+            document.getElementById("firstName").value =
+                data.firstName || "";
+
+            document.getElementById("lastName").value =
+                data.lastName || "";
+
+            document.getElementById("email").value =
+                data.email || "";
+
+            document.getElementById("phone").value =
+                data.phone || "";
+
+            document.getElementById("streetAddress").value =
+                data.streetAddress || "";
+
+            document.getElementById("city").value =
+                data.city || "";
+
+            document.getElementById("state").value =
+                data.state || "";
+
+            document.getElementById("zipCode").value =
+                data.zipCode || "";
+
+            document.getElementById("dateOfBirth").value =
+                data.dateOfBirth || "";
+
+            // Never populate or retrieve the actual SSN for this page.
+            document.getElementById("ssn").value = "";
+
+            originalProfile = getProfileData();
+        }
+
+        function getProfileData() {
+
+            return {
+                firstName: document.getElementById("firstName").value.trim(),
+                lastName: document.getElementById("lastName").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
+                streetAddress: document.getElementById("streetAddress").value.trim(),
+                city: document.getElementById("city").value.trim(),
+                state: document.getElementById("state").value.trim(),
+                zipCode: document.getElementById("zipCode").value.trim()
+            };
+
+        }
+
+        async function loadProfile() {
+
+            try {
+
+                const response = await fetch("/api/profile", {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Unable to load profile.");
+                }
+
+                populateProfile(data);
+
+                loading.style.display = "none";
+                profileForm.style.display = "block";
+
+            } catch (error) {
+
+                loading.style.display = "none";
+
+                showMessage(
+                    error.message || "Unable to load your profile. Please log in again.",
+                    "error"
+                );
+
+            }
+
+        }
+
+        profileForm.addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+            clearMessage();
+
+            if (!profileForm.reportValidity()) {
+                return;
+            }
+
+            const profileData = getProfileData();
+
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phonePattern = /^[+]?[\d\s().-]{7,20}$/;
+            const zipPattern = /^\d{5}(-\d{4})?$/;
+
+            if (!emailPattern.test(profileData.email)) {
+                showMessage("Please enter a valid email address.", "error");
+                return;
+            }
+
+            if (!phonePattern.test(profileData.phone)) {
+                showMessage("Please enter a valid phone number.", "error");
+                return;
+            }
+
+            if (!zipPattern.test(profileData.zipCode)) {
+                showMessage("Please enter a valid US ZIP code.", "error");
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Saving...";
+
+            try {
+
+                const response = await fetch("/api/profile", {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Profile update failed.");
+                }
+
+                populateProfile({
+                    ...profileData,
+                    dateOfBirth: document.getElementById("dateOfBirth").value
+                });
+
+                showMessage(
+                    "Profile updated successfully.",
+                    "success"
+                );
+
+            } catch (error) {
+
+                showMessage(
+                    error.message || "Unable to update profile. Please try again.",
+                    "error"
+                );
+
+            } finally {
+
+                saveBtn.disabled = false;
+                saveBtn.textContent = "Save Profile";
+
+            }
+
+        });
+
+        document.getElementById("cancelBtn").addEventListener("click", function() {
+
+            populateProfile(originalProfile);
+            clearMessage();
+
+        });
+
+        document.getElementById("logoutBtn").addEventListener("click", async function(event) {
+
+            event.preventDefault();
+
+            try {
+
+                const response = await fetch("/api/logout", {
+                    method: "POST",
+                    credentials: "include"
+                });
+
+                if (!response.ok) {
+                    throw new Error("Logout failed.");
+                }
+
+                window.location.href = "login.html";
+
+            } catch (error) {
+
+                showMessage(error.message, "error");
+
+            }
+
+        });
+
+        loadProfile();
+
+    </script>
+
+
+
+        
         <div class="footer">
             © 2026 Upright Bank. All rights reserved.
         </div>
