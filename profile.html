@@ -1,10 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Upright Bank | Customer Profile</title>
 
     <style>
@@ -292,7 +290,6 @@
 <body>
 
     <header class="navbar">
-
         <div class="brand">UPRIGHT BANK</div>
 
         <nav class="nav-links">
@@ -307,14 +304,12 @@
                 Logout
             </button>
         </nav>
-
     </header>
 
     <main class="container">
 
         <div class="page-heading">
             <h1>Customer Profile</h1>
-
             <p>
                 Review and manage your personal and contact information.
                 Keep your information accurate and up to date.
@@ -339,7 +334,6 @@
 
                     <div class="form-group">
                         <label for="firstName">First Name *</label>
-
                         <input
                             type="text"
                             id="firstName"
@@ -352,7 +346,6 @@
 
                     <div class="form-group">
                         <label for="lastName">Last Name *</label>
-
                         <input
                             type="text"
                             id="lastName"
@@ -365,13 +358,11 @@
 
                     <div class="form-group">
                         <label for="dateOfBirth">Date of Birth</label>
-
                         <input
                             type="date"
                             id="dateOfBirth"
                             readonly
                         >
-
                         <span class="field-note">
                             Date of birth cannot be changed online.
                         </span>
@@ -379,13 +370,11 @@
 
                     <div class="form-group">
                         <label for="ssnLast4">SSN (Last 4 Digits)</label>
-
                         <input
                             type="text"
                             id="ssnLast4"
                             readonly
                         >
-
                         <span class="field-note">
                             Social Security information cannot be edited.
                         </span>
@@ -401,7 +390,6 @@
 
                     <div class="form-group">
                         <label for="email">Email Address *</label>
-
                         <input
                             type="email"
                             id="email"
@@ -410,7 +398,6 @@
                             autocomplete="email"
                             required
                         >
-
                         <span
                             id="emailVerification"
                             class="verification-status"
@@ -419,7 +406,6 @@
 
                     <div class="form-group">
                         <label for="phone">Phone Number *</label>
-
                         <input
                             type="tel"
                             id="phone"
@@ -428,7 +414,6 @@
                             autocomplete="tel"
                             required
                         >
-
                         <span
                             id="phoneVerification"
                             class="verification-status"
@@ -439,7 +424,6 @@
                         <label for="streetAddress">
                             Street Address *
                         </label>
-
                         <input
                             type="text"
                             id="streetAddress"
@@ -452,7 +436,6 @@
 
                     <div class="form-group">
                         <label for="city">City *</label>
-
                         <input
                             type="text"
                             id="city"
@@ -465,7 +448,6 @@
 
                     <div class="form-group">
                         <label for="state">State *</label>
-
                         <input
                             type="text"
                             id="state"
@@ -478,7 +460,6 @@
 
                     <div class="form-group">
                         <label for="zipCode">ZIP Code *</label>
-
                         <input
                             type="text"
                             id="zipCode"
@@ -520,303 +501,7 @@
         © 2026 Upright Bank. All rights reserved.
     </footer>
 
-    <script>
-        const API_URL = "/api/profile.php";
-
-        const form = document.getElementById("profileForm");
-        const profileCard = document.getElementById("profileCard");
-        const loading = document.getElementById("loading");
-        const message = document.getElementById("message");
-        const saveBtn = document.getElementById("saveBtn");
-        const logoutBtn = document.getElementById("logoutBtn");
-
-        let originalEmail = "";
-        let originalPhone = "";
-
-        function showMessage(text, type) {
-            message.textContent = text;
-            message.className = "message " + type;
-        }
-
-        function clearMessage() {
-            message.textContent = "";
-            message.className = "message";
-        }
-
-        function setVerification(elementId, verified) {
-            const element = document.getElementById(elementId);
-
-            element.textContent = verified
-                ? "Verified"
-                : "Not verified";
-
-            element.className = "verification-status " +
-                (verified ? "verified" : "unverified");
-        }
-
-        function populateProfile(data) {
-            document.getElementById("firstName").value =
-                data.firstName || "";
-
-            document.getElementById("lastName").value =
-                data.lastName || "";
-
-            document.getElementById("dateOfBirth").value =
-                data.dateOfBirth || "";
-
-            document.getElementById("ssnLast4").value =
-                data.ssnLast4 ? "****" + data.ssnLast4 : "Not available";
-
-            document.getElementById("email").value =
-                data.email || "";
-
-            document.getElementById("phone").value =
-                data.phone || "";
-
-            document.getElementById("streetAddress").value =
-                data.streetAddress || "";
-
-            document.getElementById("city").value =
-                data.city || "";
-
-            document.getElementById("state").value =
-                data.state || "";
-
-            document.getElementById("zipCode").value =
-                data.zipCode || "";
-
-            originalEmail = (data.email || "").trim().toLowerCase();
-            originalPhone = (data.phone || "").trim();
-
-            setVerification(
-                "emailVerification",
-                data.emailVerified === true
-            );
-
-            setVerification(
-                "phoneVerification",
-                data.phoneVerified === true
-            );
-        }
-
-        async function loadProfile() {
-            loading.hidden = false;
-            profileCard.hidden = true;
-            clearMessage();
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: {
-                        "Accept": "application/json"
-                    }
-                });
-
-                const contentType =
-                    response.headers.get("content-type") || "";
-
-                if (!contentType.includes("application/json")) {
-                    throw new Error(
-                        "The server did not return JSON. Check the PHP API URL."
-                    );
-                }
-
-                const data = await response.json();
-
-                if (response.status === 401) {
-                    window.location.href = "login.html";
-                    return;
-                }
-
-                if (!response.ok || !data.success) {
-                    throw new Error(
-                        data.message || "Unable to load your profile."
-                    );
-                }
-
-                populateProfile(data);
-
-                profileCard.hidden = false;
-
-            } catch (error) {
-                console.error("Profile loading error:", error);
-
-                showMessage(error.message, "error");
-
-            } finally {
-                loading.hidden = true;
-            }
-        }
-
-        function validateForm(data) {
-            if (
-                !data.firstName ||
-                !data.lastName ||
-                !data.email ||
-                !data.phone ||
-                !data.streetAddress ||
-                !data.city ||
-                !data.state ||
-                !data.zipCode
-            ) {
-                return "Please complete all required fields.";
-            }
-
-            if (data.firstName.length > 100 ||
-                data.lastName.length > 100) {
-                return "First name and last name must be within 100 characters.";
-            }
-
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            if (!emailPattern.test(data.email)) {
-                return "Please enter a valid email address.";
-            }
-
-            const phonePattern = /^\+?[0-9\s().-]{7,30}$/;
-
-            if (!phonePattern.test(data.phone)) {
-                return "Please enter a valid phone number.";
-            }
-
-            const zipPattern = /^\d{5}(-\d{4})?$/;
-
-            if (!zipPattern.test(data.zipCode)) {
-                return "Please enter a valid US ZIP code.";
-            }
-
-            return null;
-        }
-
-        form.addEventListener("submit", async function(event) {
-            event.preventDefault();
-
-            clearMessage();
-
-            const profileData = {
-                firstName: document.getElementById("firstName").value.trim(),
-                lastName: document.getElementById("lastName").value.trim(),
-                email: document.getElementById("email").value.trim(),
-                phone: document.getElementById("phone").value.trim(),
-                streetAddress: document.getElementById("streetAddress").value.trim(),
-                city: document.getElementById("city").value.trim(),
-                state: document.getElementById("state").value.trim(),
-                zipCode: document.getElementById("zipCode").value.trim()
-            };
-
-            const validationError = validateForm(profileData);
-
-            if (validationError) {
-                showMessage(validationError, "error");
-                return;
-            }
-
-            saveBtn.disabled = true;
-            saveBtn.textContent = "Saving...";
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: "PUT",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify(profileData)
-                });
-
-                const contentType =
-                    response.headers.get("content-type") || "";
-
-                if (!contentType.includes("application/json")) {
-                    throw new Error(
-                        "The server did not return JSON. Check the PHP API URL."
-                    );
-                }
-
-                const data = await response.json();
-
-                if (response.status === 401) {
-                    window.location.href = "login.html";
-                    return;
-                }
-
-                if (!response.ok || !data.success) {
-                    throw new Error(
-                        data.message || "Unable to update your profile."
-                    );
-                }
-
-                showMessage(
-                    data.message || "Profile updated successfully.",
-                    "success"
-                );
-
-                // Update the verification labels after saving.
-                setVerification(
-                    "emailVerification",
-                    data.emailVerified === true
-                );
-
-                setVerification(
-                    "phoneVerification",
-                    data.phoneVerified === true
-                );
-
-                originalEmail = profileData.email.toLowerCase();
-                originalPhone = profileData.phone;
-
-                if (
-                    data.emailVerificationRequired ||
-                    data.phoneVerificationRequired
-                ) {
-                    showMessage(
-                        "Profile updated successfully. Your changed email or phone number requires verification.",
-                        "success"
-                    );
-                }
-
-            } catch (error) {
-                console.error("Profile update error:", error);
-
-                showMessage(error.message, "error");
-
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = "Save Profile";
-            }
-        });
-
-        logoutBtn.addEventListener("click", async function() {
-            logoutBtn.disabled = true;
-
-            try {
-                const response = await fetch("logout.php", {
-                    method: "POST",
-                    credentials: "include"
-                });
-
-                if (!response.ok) {
-                    throw new Error("Logout failed.");
-                }
-
-                window.location.href = "login.html";
-
-            } catch (error) {
-                console.error("Logout error:", error);
-
-                showMessage(
-                    "Unable to log out. Please try again.",
-                    "error"
-                );
-
-                logoutBtn.disabled = false;
-            }
-        });
-
-        document.addEventListener("DOMContentLoaded", loadProfile);
-    </script>
+    <script src="profile.js" defer></script>
 
 </body>
 </html>
