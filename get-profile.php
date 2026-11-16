@@ -1,9 +1,21 @@
+
 <?php
 declare(strict_types=1);
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+
+    session_start();
+}
+
 require_once __DIR__ . '/config.php';
 
-// Only GET requests are allowed
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_response([
         'success' => false,
@@ -11,25 +23,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     ], 405);
 }
 
-// Check authentication
-if (
-    empty($_SESSION['user_id']) ||
-    empty($_SESSION['customer_id'])
-) {
+if (empty($_SESSION['customer_id'])) {
     json_response([
         'success' => false,
         'message' => 'Please log in to access your profile.'
     ], 401);
 }
 
-// Get authenticated Customer ID
-$customerId = (int) $_SESSION['customer_id'];
-
 try {
+    $customerId = (int) $_SESSION['customer_id'];
 
     $stmt = $pdo->prepare("
         SELECT
-            id,
             first_name,
             last_name,
             date_of_birth,
@@ -50,7 +55,7 @@ try {
         ':customer_id' => $customerId
     ]);
 
-    $customer = $stmt->fetch();
+    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$customer) {
         json_response([
@@ -78,10 +83,10 @@ try {
 
 } catch (Throwable $e) {
 
-    error_log('GET PROFILE ERROR: ' . $e->getMessage());
+    error_log('Get profile error: ' . $e->getMessage());
 
     json_response([
         'success' => false,
-        'message' => 'Unable to retrieve customer profile.'
+        'message' => 'Unable to retrieve profile.'
     ], 500);
 }
