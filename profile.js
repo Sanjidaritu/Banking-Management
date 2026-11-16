@@ -1,7 +1,7 @@
-
 "use strict";
 
-const API_URL = "/api/profile.php";
+const GET_PROFILE_URL = "/get-profile.php";
+const UPDATE_PROFILE_URL = "/update-profile.php";
 
 const form = document.getElementById("profileForm");
 const profileCard = document.getElementById("profileCard");
@@ -110,7 +110,7 @@ async function loadProfile() {
 
     try {
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(GET_PROFILE_URL, {
             method: "GET",
             credentials: "include",
             headers: {
@@ -140,7 +140,7 @@ async function loadProfile() {
             );
         }
 
-        populateProfile(data);
+        populateProfile(data.profile);
 
         profileCard.hidden = false;
 
@@ -182,8 +182,10 @@ function validateProfile(data) {
         }
     }
 
-    if (data.firstName.length > 100 ||
-        data.lastName.length > 100) {
+    if (
+        data.firstName.length > 100 ||
+        data.lastName.length > 100
+    ) {
         return "First name and last name must not exceed 100 characters.";
     }
 
@@ -199,8 +201,10 @@ function validateProfile(data) {
         return "Street address is too long.";
     }
 
-    if (data.city.length > 100 ||
-        data.state.length > 100) {
+    if (
+        data.city.length > 100 ||
+        data.state.length > 100
+    ) {
         return "City or state is too long.";
     }
 
@@ -276,7 +280,7 @@ async function saveProfile(event) {
 
     try {
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(UPDATE_PROFILE_URL, {
             method: "PUT",
             credentials: "include",
             headers: {
@@ -308,30 +312,20 @@ async function saveProfile(event) {
             );
         }
 
-        setVerification(
-            "emailVerification",
-            data.emailVerified === true
-        );
-
-        setVerification(
-            "phoneVerification",
-            data.phoneVerified === true
-        );
+        // Reload profile from database after successful update.
+        await loadProfile();
 
         if (
             data.emailVerificationRequired ||
             data.phoneVerificationRequired
         ) {
-
             showMessage(
                 "Profile updated successfully. Your changed email or phone number requires verification.",
                 "success"
             );
-
         } else {
-
             showMessage(
-                "Profile updated successfully.",
+                data.message || "Profile updated successfully.",
                 "success"
             );
         }
