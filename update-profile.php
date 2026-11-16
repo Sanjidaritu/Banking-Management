@@ -1,62 +1,44 @@
+
 <?php
 declare(strict_types=1);
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+
+    session_start();
+}
+
 require_once __DIR__ . '/config.php';
 
-// 1. Allow PUT requests only
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
     json_response([
         'success' => false,
-        'message' => 'Method not allowed.',
-        'received_method' => $_SERVER['REQUEST_METHOD']
+        'message' => 'Method not allowed.'
     ], 405);
 }
 
-// 2. Check authenticated session
-if (
-    empty($_SESSION['user_id']) ||
-    empty($_SESSION['customer_id'])
-) {
+if (empty($_SESSION['customer_id'])) {
     json_response([
         'success' => false,
         'message' => 'Please log in to update your profile.'
     ], 401);
 }
 
-// 3. Get customer ID from authenticated session
-$customerId = (int) $_SESSION['customer_id'];
-
-// 4. Read JSON request body
-$rawInput = file_get_contents('php://input');
-$data = json_decode($rawInput ?: '', true);
+$data = json_decode(file_get_contents('php://input') ?: '', true);
 
 if (!is_array($data)) {
     json_response([
         'success' => false,
-        'message' => 'Invalid JSON request.'
+        'message' => 'Invalid request data.'
     ], 400);
 }
 
-// 5. Prevent changes to protected fields
-$protectedFields = [
-    'id',
-    'customer_id',
-    'date_of_birth',
-    'dateOfBirth',
-    'ssn',
-    'ssn_last4'
-];
-
-foreach ($protectedFields as $field) {
-    if (array_key_exists($field, $data)) {
-        json_response([
-            'success' => false,
-            'message' => 'You cannot update protected customer information.'
-        ], 400);
-    }
-}
-
-// 6. Define editable fields and maximum lengths
 $fields = [
     'firstName' => 100,
     'lastName' => 100,
@@ -70,13 +52,8 @@ $fields = [
 
 $values = [];
 
-// 7. Validate required fields
 foreach ($fields as $field => $maxLength) {
-
-    if (
-        !isset($data[$field]) ||
-        !is_string($data[$field])
-    ) {
+    if (!isset($data[$field]) || !is_string($data[$field])) {
         json_response([
             'success' => false,
             'message' => ucfirst($field) . ' is required.'
@@ -85,70 +62,58 @@ foreach ($fields as $field => $maxLength) {
 
     $value = trim($data[$field]);
 
-    if ($value === '') {
+    if ($value === '' || strlen($value) > $maxLength) {
         json_response([
             'success' => false,
-            'message' => ucfirst($field) . ' is required.'
-        ], 400);
-    }
-
-    if (strlen($value) > $maxLength) {
-        json_response([
-            'success' => false,
-            'message' => ucfirst($field) . ' is too long.'
+            'message' => 'Invalid ' . $field . '.'
         ], 400);
     }
 
     $values[$field] = $value;
 }
 
-// 8. Validate email
 $values['email'] = strtolower($values['email']);
 
 if (!filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
     json_response([
         'success' => false,
-        'message' => 'Please enter a valid email address.'
+        'message' => 'Invalid email address.'
     ], 400);
 }
 
-// 9. Validate phone
 if (!preg_match('/^\+?[0-9\s().-]{7,30}$/', $values['phone'])) {
     json_response([
         'success' => false,
-        'message' => 'Please enter a valid phone number.'
+        'message' => 'Invalid phone number.'
     ], 400);
 }
 
-// 10. Validate US ZIP code
 if (!preg_match('/^\d{5}(-\d{4})?$/', $values['zipCode'])) {
     json_response([
         'success' => false,
-        'message' => 'Please enter a valid ZIP code.'
+        'message' => 'Invalid ZIP code.'
     ], 400);
 }
 
-try {
+$customerId = (int) $_SESSION['customer_id'];
 
-    // 11. Start database transaction
+try {
     $pdo->beginTransaction();
 
-    // 12. Lock the existing customer record
-    $checkStmt = $pdo->prepare("
-        SELECT id, email, phone
+    $stmt = $pdo->prepare("
+        SELECT email, phone
         FROM customers
         WHERE id = :customer_id
-        LIMIT 1
         FOR UPDATE
     ");
 
-    $checkStmt->execute([
+    $stmt->execute([
         ':customer_id' => $customerId
     ]);
 
-    $existingCustomer = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$existingCustomer) {
+    if (!$existing) {
         $pdo->rollBack();
 
         json_response([
@@ -157,21 +122,11 @@ try {
         ], 404);
     }
 
-    // 13. Check whether email or phone changed
-    $emailChanged = (
-        strtolower((string) $existingCustomer['email'])
-        !== $values['email']
-    );
+    $emailChanged = strtolower((string) $existing['email']) !== $values['email'];
+    $phoneChanged = (string) $existing['phone'] !== $values['phone'];
 
-    $phoneChanged = (
-        (string) $existingCustomer['phone']
-        !== $values['phone']
-    );
-
-    // 14. Update the existing customer only
-    $updateStmt = $pdo->prepare("
+    $stmt = $pdo->prepare("
         UPDATE customers SET
-
             first_name = :first_name,
             last_name = :last_name,
             email = :email,
@@ -180,22 +135,19 @@ try {
             city = :city,
             state = :state,
             postal_code = :postal_code,
-
             email_verified = CASE
                 WHEN :email_changed = 1 THEN 0
                 ELSE email_verified
             END,
-
             phone_verified = CASE
                 WHEN :phone_changed = 1 THEN 0
                 ELSE phone_verified
             END
-
         WHERE id = :customer_id
         LIMIT 1
     ");
 
-    $updateStmt->execute([
+    $stmt->execute([
         ':first_name' => $values['firstName'],
         ':last_name' => $values['lastName'],
         ':email' => $values['email'],
@@ -209,10 +161,8 @@ try {
         ':customer_id' => $customerId
     ]);
 
-    // 15. Commit changes
     $pdo->commit();
 
-    // 16. Return success response
     json_response([
         'success' => true,
         'message' => 'Profile updated successfully.',
@@ -222,15 +172,14 @@ try {
 
 } catch (Throwable $e) {
 
-    // 17. Roll back if something goes wrong
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
-    error_log('Profile update error: ' . $e->getMessage());
+    error_log('Update profile error: ' . $e->getMessage());
 
     json_response([
         'success' => false,
-        'message' => 'Unable to update profile. Please try again.'
+        'message' => 'Unable to update profile.'
     ], 500);
 }
